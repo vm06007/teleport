@@ -4,8 +4,8 @@ import { styled } from "@mui/material/styles";
 import Web3 from "web3";
 import { fetchBalances, fetchTokenDetails, fetchSpotPrices } from "../../services/portfolioService";
 
-const GradientCard = styled(Card)(({ theme }) => ({
-    background: "linear-gradient(135deg, #8B7FB8 0%, #6366F1 100%)",
+const GradientCard = styled(Card)(({ theme, networkColor }) => ({
+    background: `linear-gradient(135deg, ${networkColor} 0%, ${networkColor}dd 100%)`,
     color: "white",
     marginBottom: theme.spacing(3),
     borderRadius: "20px",
@@ -24,7 +24,7 @@ const TokenCard = styled(Card)(({ theme }) => ({
     },
 }));
 
-const UserPortfolio = ({ address }) => {
+const UserPortfolio = ({ address, chainId = 137, networkName = "Polygon", networkColor = "#8B7FB8" }) => {
     const [balances, setBalances] = useState([]);
     const [loading, setLoading] = useState(true);
     const [totalPortfolioValue, setTotalPortfolioValue] = useState(0);
@@ -33,14 +33,14 @@ const UserPortfolio = ({ address }) => {
         if (address) {
             fetchPortfolioData();
         }
-    }, [address]);
+    }, [address, chainId]);
 
     const fetchPortfolioData = async () => {
         try {
             setLoading(true);
 
             // Fetch balances
-            const balanceData = await fetchBalances(address);
+            const balanceData = await fetchBalances(address, chainId);
 
             // Filter out tokens with zero balance
             const nonZeroBalances = Object.entries(balanceData).filter(
@@ -58,10 +58,10 @@ const UserPortfolio = ({ address }) => {
             const tokenAddresses = nonZeroBalances.map(([address]) => address);
 
             // Fetch token details
-            const tokenDetails = await fetchTokenDetails(tokenAddresses);
+            const tokenDetails = await fetchTokenDetails(tokenAddresses, chainId);
 
-            // Fetch spot prices
-            const prices = await fetchSpotPrices(tokenAddresses);
+            // Fetch spot prices (pass tokenDetails for symbol-based pricing)
+            const prices = await fetchSpotPrices(tokenAddresses, chainId, tokenDetails);
             console.log("Prices:", prices);
 
             // Combine all data
@@ -133,7 +133,7 @@ const UserPortfolio = ({ address }) => {
             <Typography variant="h4" gutterBottom sx={{ textAlign: "center", mb: 3, fontWeight: 600 }}>
                 User Portfolio
             </Typography>
-            <GradientCard elevation={0}>
+            <GradientCard elevation={0} networkColor={networkColor}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                     <Box sx={{
                         backgroundColor: "rgba(255,255,255,0.2)",
@@ -147,7 +147,7 @@ const UserPortfolio = ({ address }) => {
                         <Typography variant="caption" sx={{ fontSize: "10px" }}>🔗</Typography>
                     </Box>
                     <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Polygon Network
+                        {networkName} Network
                     </Typography>
                     <Box sx={{ flexGrow: 1 }} />
                     <Typography variant="body2" sx={{ opacity: 0.9 }}>

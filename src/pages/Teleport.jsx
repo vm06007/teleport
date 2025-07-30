@@ -1,18 +1,70 @@
-import React from 'react';
-import { Container, Typography, Box, Paper, Button, Alert, Chip } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Container, Typography, Box, Paper, Button, Alert, Chip, Menu, MenuItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useWallet } from '../hooks/useWallet';
 import UserPortfolio from '../components/Portfolio/UserPortfolio';
+import { NETWORKS, switchNetwork } from '../utils/networks';
 
 const Teleport = () => {
     const navigate = useNavigate();
     const { account, isConnecting, error, connectWallet, disconnectWallet, isConnected } = useWallet();
+    const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS.polygon);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [switchingNetwork, setSwitchingNetwork] = useState(false);
 
     const formatAddress = (address) => {
         if (!address) return '';
         return `${address.slice(0, 6)}...${address.slice(-4)}`;
     };
+
+    const handleNetworkClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleNetworkClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleNetworkSelect = async (network) => {
+        handleNetworkClose();
+        if (network.chainId === selectedNetwork.chainId) return;
+
+        setSwitchingNetwork(true);
+        try {
+            await switchNetwork(network.chainId);
+            setSelectedNetwork(network);
+        } catch (error) {
+            console.error('Failed to switch network:', error);
+        } finally {
+            setSwitchingNetwork(false);
+        }
+    };
+
+    // Listen for network changes
+    useEffect(() => {
+        if (window.ethereum) {
+            const handleChainChanged = (chainId) => {
+                const networkId = parseInt(chainId, 16);
+                const network = Object.values(NETWORKS).find(n => n.chainId === networkId);
+                if (network) {
+                    setSelectedNetwork(network);
+                }
+            };
+
+            window.ethereum.on('chainChanged', handleChainChanged);
+            
+            // Check current network
+            window.ethereum.request({ method: 'eth_chainId' }).then(chainId => {
+                handleChainChanged(chainId);
+            });
+
+            return () => {
+                window.ethereum.removeListener('chainChanged', handleChainChanged);
+            };
+        }
+    }, []);
 
     return (
         <Box sx={{ 
@@ -29,10 +81,48 @@ const Teleport = () => {
                         Teleport Portfolio
                     </Typography>
                     <Typography variant="h5" sx={{ color: 'rgba(255,255,255,0.7)' }} paragraph>
-                        View your Web3 portfolio on Polygon Network
+                        View your Web3 portfolio on {selectedNetwork.name}
                     </Typography>
                 
                 <Box sx={{ mt: 4, mb: 4 }}>
+                    {/* Network Selector */}
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                        <Button
+                            variant="outlined"
+                            onClick={handleNetworkClick}
+                            endIcon={<ExpandMoreIcon />}
+                            disabled={switchingNetwork}
+                            sx={{
+                                borderColor: selectedNetwork.color,
+                                color: selectedNetwork.color,
+                                '&:hover': {
+                                    borderColor: selectedNetwork.color,
+                                    backgroundColor: `${selectedNetwork.color}10`,
+                                }
+                            }}
+                        >
+                            <Box component="span" sx={{ mr: 1 }}>{selectedNetwork.icon}</Box>
+                            {selectedNetwork.name}
+                        </Button>
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={handleNetworkClose}
+                        >
+                            {Object.values(NETWORKS).map((network) => (
+                                <MenuItem 
+                                    key={network.chainId}
+                                    onClick={() => handleNetworkSelect(network)}
+                                    selected={network.chainId === selectedNetwork.chainId}
+                                >
+                                    <Box component="span" sx={{ mr: 1 }}>{network.icon}</Box>
+                                    {network.name}
+                                </MenuItem>
+                            ))}
+                        </Menu>
+                    </Box>
+
+                    {/* Wallet Connection */}
                     {!isConnected ? (
                         <Button
                             variant="contained"
@@ -41,12 +131,12 @@ const Teleport = () => {
                             onClick={connectWallet}
                             disabled={isConnecting}
                             sx={{
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                background: `linear-gradient(135deg, ${selectedNetwork.color} 0%, ${selectedNetwork.color}dd 100%)`,
                                 color: 'white',
                                 px: 4,
                                 py: 1.5,
                                 '&:hover': {
-                                    background: 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)',
+                                    background: `linear-gradient(135deg, ${selectedNetwork.color}dd 0%, ${selectedNetwork.color}bb 100%)`,
                                 }
                             }}
                         >
@@ -57,7 +147,10 @@ const Teleport = () => {
                             <Chip
                                 icon={<AccountBalanceWalletIcon />}
                                 label={formatAddress(account)}
-                                color="primary"
+                                sx={{ 
+                                    borderColor: selectedNetwork.color,
+                                    color: selectedNetwork.color
+                                }}
                                 variant="outlined"
                             />
                             <Button
@@ -80,17 +173,22 @@ const Teleport = () => {
             </Box>
 
             {isConnected ? (
-                <UserPortfolio address={account} />
+                <UserPortfolio 
+                    address={account} 
+                    chainId={selectedNetwork.chainId}
+                    networkName={selectedNetwork.name}
+                    networkColor={selectedNetwork.color}
+                />
             ) : (
                 <Paper elevation={3} sx={{ p: 4, borderRadius: 3, textAlign: 'center' }}>
                     <Typography variant="h5" gutterBottom>
                         Connect Your Wallet
                     </Typography>
                     <Typography variant="body1" color="text.secondary" paragraph>
-                        Connect your MetaMask wallet to view your token portfolio on Polygon Network.
+                        Connect your MetaMask wallet to view your token portfolio on {selectedNetwork.name}.
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                        Make sure you have MetaMask installed and are connected to Polygon Network.
+                        Make sure you have MetaMask installed and are connected to {selectedNetwork.name}.
                     </Typography>
                 </Paper>
             )}

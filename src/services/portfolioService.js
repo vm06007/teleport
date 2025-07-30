@@ -1,15 +1,15 @@
 import axios from "axios";
+import { getTokenPrice, isNativeCurrency, getNativeCurrencySymbol } from "../utils/tokenMappings";
 
-const CHAIN_ID = 137; // Polygon Network
 const PROXY_URL = "http://localhost:5003/proxy";
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const fetchBalances = async (address) => {
+export const fetchBalances = async (address, chainId = 137) => {
     try {
         const response = await axios.get(PROXY_URL, {
             params: {
-                url: `https://api.1inch.dev/balance/v1.2/${CHAIN_ID}/balances/${address}`
+                url: `https://api.1inch.dev/balance/v1.2/${chainId}/balances/${address}`
             }
         });
         return response.data;
@@ -25,13 +25,13 @@ export const fetchBalances = async (address) => {
     }
 };
 
-export const fetchTokenDetails = async (tokenAddresses) => {
+export const fetchTokenDetails = async (tokenAddresses, chainId = 137) => {
     try {
         await delay(1000); // Rate limiting
         const addressesString = tokenAddresses.join(",");
         const response = await axios.get(PROXY_URL, {
             params: {
-                url: `https://api.1inch.dev/token/v1.2/${CHAIN_ID}/custom?addresses=${addressesString}`
+                url: `https://api.1inch.dev/token/v1.2/${chainId}/custom?addresses=${addressesString}`
             }
         });
         return response.data;
@@ -64,66 +64,60 @@ export const fetchTokenDetails = async (tokenAddresses) => {
     }
 };
 
-export const fetchSpotPrices = async (tokenAddresses) => {
+export const fetchSpotPrices = async (tokenAddresses, chainId = 137, tokenDetails = {}) => {
     try {
         await delay(1000); // Rate limiting
         const addressesString = tokenAddresses.join(",");
         const response = await axios.get(PROXY_URL, {
             params: {
-                url: `https://api.1inch.dev/price/v1.1/${CHAIN_ID}/${addressesString}`
+                url: `https://api.1inch.dev/price/v1.1/${chainId}/${addressesString}`
             }
         });
 
-        // The 1inch price API returns prices in a complex format
-        // For now, let"s use reasonable estimates based on token types
+        // Convert prices using token symbols for consistency across networks
         const convertedPrices = {};
-        Object.entries(response.data).forEach(([address, apiPrice]) => {
-            // Convert the API price to a more reasonable USD estimate
-            const priceValue = parseFloat(apiPrice) / Math.pow(10, 18);
-
-            // Apply different conversion factors based on typical token values
-            if (address.toLowerCase() === "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063") { // DAI
-                convertedPrices[address] = 1.00; // Stable at ~$1
-            } else if (address.toLowerCase() === "0x2791bca1f2de4661ed88a30c99a7a9449aa84174" ||
-                    address.toLowerCase() === "0xc2132d05d31c914a87c6611c10748aeb04b58e8f" ||
-                    address.toLowerCase() === "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359") { // USDC variants
-                convertedPrices[address] = 1.00; // Stable at ~$1
-            } else if (address.toLowerCase() === "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619") { // WETH
-                convertedPrices[address] = 3400.00; // ETH price estimate
-            } else if (address.toLowerCase() === "0x53e0bca35ec356bd5dddfebbd1fc0fd03fabad39") { // LINK
-                convertedPrices[address] = 22.50; // LINK price estimate
-            } else if (address.toLowerCase() === "0xa1c57f48f0deb89f569dfbe6e2b7f46d33606fd4") { // MANA
-                convertedPrices[address] = 0.85; // MANA price estimate
-            } else if (address.toLowerCase() === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") { // MATIC
-                convertedPrices[address] = 0.95; // MATIC price estimate
-            } else if (address.toLowerCase() === "0xb77e62709e39ad1cbeebe77cf493745aec0f453a") { // REVV
-                convertedPrices[address] = 0.15; // REVV price estimate
-            } else if (address.toLowerCase() === "0xc6c855ad634dcdad23e64da71ba85b8c51e5ad7c") { // ICE
-                convertedPrices[address] = 0.02; // ICE price estimate
+        
+        tokenAddresses.forEach(address => {
+            const token = tokenDetails[address];
+            
+            // Check if it's native currency
+            if (isNativeCurrency(address, chainId)) {
+                const nativeSymbol = getNativeCurrencySymbol(chainId);
+                convertedPrices[address] = getTokenPrice(nativeSymbol);
+            } else if (token && token.symbol) {
+                // Use symbol-based pricing for consistency across networks
+                convertedPrices[address] = getTokenPrice(token.symbol);
             } else {
-                // For unknown tokens, use a scaled version of the API price
-                convertedPrices[address] = Math.max(0.01, priceValue * 1000);
+                // For unknown tokens, try to parse the API price
+                const apiPrice = response.data[address];
+                if (apiPrice) {
+                    const priceValue = parseFloat(apiPrice) / Math.pow(10, 18);
+                    convertedPrices[address] = Math.max(0.01, priceValue * 1000);
+                } else {
+                    convertedPrices[address] = 0.01;
+                }
             }
         });
 
         return convertedPrices;
     } catch (error) {
         console.error("Error fetching spot prices:", error);
-        // Fallback to mock prices
+        
+        // Fallback: use symbol-based pricing
         const prices = {};
-
-        const MOCK_PRICES = {
-            "0x2791bca1f2de4661ed88a30c99a7a9449aa84174": 1.00,
-            "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619": 2350.00,
-            "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6": 43500.00,
-            "0xd6df932a45c0f255f85145f286ea0b292b21c90b": 85.50
-        };
-
-        tokenAddresses.forEach(addr => {
-            if (MOCK_PRICES[addr]) {
-                prices[addr] = MOCK_PRICES[addr];
+        tokenAddresses.forEach(address => {
+            const token = tokenDetails[address];
+            
+            if (isNativeCurrency(address, chainId)) {
+                const nativeSymbol = getNativeCurrencySymbol(chainId);
+                prices[address] = getTokenPrice(nativeSymbol);
+            } else if (token && token.symbol) {
+                prices[address] = getTokenPrice(token.symbol);
+            } else {
+                prices[address] = 0.01;
             }
         });
+        
         return prices;
     }
 };
