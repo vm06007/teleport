@@ -71,22 +71,25 @@ const Teleport = () => {
             minHeight: '100vh', 
             backgroundColor: '#0a0a0a',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            py: 4
+            flexDirection: 'column',
+            py: 2
         }}>
-            <Container maxWidth="lg">
-                <Box sx={{ textAlign: 'center', mb: 6 }}>
-                    <Typography variant="h2" component="h1" gutterBottom sx={{ color: 'white' }}>
+            <Container maxWidth="lg" sx={{ flex: 1 }}>
+                {/* Header with title and controls */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    mb: 4
+                }}>
+                    {/* Title on the left */}
+                    <Typography variant="h2" component="h1" sx={{ color: 'white' }}>
                         Teleport Portfolio
                     </Typography>
-                    <Typography variant="h5" sx={{ color: 'rgba(255,255,255,0.7)' }} paragraph>
-                        View your Web3 portfolio on {selectedNetwork.name}
-                    </Typography>
-                
-                <Box sx={{ mt: 4, mb: 4 }}>
-                    {/* Network Selector */}
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+
+                    {/* Controls on the right */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {/* Network Selector */}
                         <Button
                             variant="outlined"
                             onClick={handleNetworkClick}
@@ -120,49 +123,49 @@ const Teleport = () => {
                                 </MenuItem>
                             ))}
                         </Menu>
-                    </Box>
 
-                    {/* Wallet Connection */}
-                    {!isConnected ? (
-                        <Button
-                            variant="contained"
-                            size="large"
-                            startIcon={<AccountBalanceWalletIcon />}
-                            onClick={connectWallet}
-                            disabled={isConnecting}
-                            sx={{
-                                background: `linear-gradient(135deg, ${selectedNetwork.color} 0%, ${selectedNetwork.color}dd 100%)`,
-                                color: 'white',
-                                px: 4,
-                                py: 1.5,
-                                '&:hover': {
-                                    background: `linear-gradient(135deg, ${selectedNetwork.color}dd 0%, ${selectedNetwork.color}bb 100%)`,
-                                }
-                            }}
-                        >
-                            {isConnecting ? 'Connecting...' : 'Connect Wallet'}
-                        </Button>
-                    ) : (
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                            <Chip
-                                icon={<AccountBalanceWalletIcon />}
-                                label={formatAddress(account)}
-                                sx={{ 
-                                    borderColor: selectedNetwork.color,
-                                    color: selectedNetwork.color
-                                }}
-                                variant="outlined"
-                            />
+                        {/* Wallet Connection */}
+                        {!isConnected ? (
                             <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={disconnectWallet}
-                                color="error"
+                                variant="contained"
+                                size="medium"
+                                startIcon={<AccountBalanceWalletIcon />}
+                                onClick={connectWallet}
+                                disabled={isConnecting}
+                                sx={{
+                                    background: `linear-gradient(135deg, ${selectedNetwork.color} 0%, ${selectedNetwork.color}dd 100%)`,
+                                    color: 'white',
+                                    px: 3,
+                                    py: 1,
+                                    '&:hover': {
+                                        background: `linear-gradient(135deg, ${selectedNetwork.color}dd 0%, ${selectedNetwork.color}bb 100%)`,
+                                    }
+                                }}
                             >
-                                Disconnect
+                                {isConnecting ? 'Connecting...' : 'Connect Wallet'}
                             </Button>
-                        </Box>
-                    )}
+                        ) : (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Chip
+                                    icon={<AccountBalanceWalletIcon />}
+                                    label={formatAddress(account)}
+                                    sx={{ 
+                                        borderColor: selectedNetwork.color,
+                                        color: selectedNetwork.color
+                                    }}
+                                    variant="outlined"
+                                />
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    onClick={disconnectWallet}
+                                    color="error"
+                                >
+                                    Disconnect
+                                </Button>
+                            </Box>
+                        )}
+                    </Box>
                 </Box>
 
                 {error && (
@@ -170,28 +173,30 @@ const Teleport = () => {
                         {error}
                     </Alert>
                 )}
-            </Box>
 
-            {isConnected ? (
-                <UserPortfolio 
-                    address={account} 
-                    chainId={selectedNetwork.chainId}
-                    networkName={selectedNetwork.name}
-                    networkColor={selectedNetwork.color}
-                />
-            ) : (
-                <Paper elevation={3} sx={{ p: 4, borderRadius: 3, textAlign: 'center' }}>
-                    <Typography variant="h5" gutterBottom>
-                        Connect Your Wallet
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" paragraph>
-                        Connect your MetaMask wallet to view your token portfolio on {selectedNetwork.name}.
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Make sure you have MetaMask installed and are connected to {selectedNetwork.name}.
-                    </Typography>
-                </Paper>
-            )}
+                {/* Main content */}
+                <Box sx={{ flex: 1 }}>
+                    {isConnected ? (
+                        <UserPortfolio 
+                            address={account} 
+                            chainId={selectedNetwork.chainId}
+                            networkName={selectedNetwork.name}
+                            networkColor={selectedNetwork.color}
+                        />
+                    ) : (
+                        <Paper elevation={3} sx={{ p: 4, borderRadius: 3, textAlign: 'center' }}>
+                            <Typography variant="h5" gutterBottom>
+                                Connect Your Wallet
+                            </Typography>
+                            <Typography variant="body1" color="text.secondary" paragraph>
+                                Connect your MetaMask wallet to view your token portfolio on {selectedNetwork.name}.
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Make sure you have MetaMask installed and are connected to {selectedNetwork.name}.
+                            </Typography>
+                        </Paper>
+                    )}
+                </Box>
 
                 <Box sx={{ textAlign: 'center', mt: 4 }}>
                     <Typography 
