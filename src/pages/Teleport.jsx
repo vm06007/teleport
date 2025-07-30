@@ -5,6 +5,7 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useWallet } from '../hooks/useWallet';
 import UserPortfolio from '../components/Portfolio/UserPortfolio';
+import ProtocolPortfolio from '../components/Portfolio/ProtocolPortfolio';
 import { NETWORKS, switchNetwork } from '../utils/networks';
 
 const Teleport = () => {
@@ -13,6 +14,68 @@ const Teleport = () => {
     const [selectedNetwork, setSelectedNetwork] = useState(NETWORKS.polygon);
     const [anchorEl, setAnchorEl] = useState(null);
     const [switchingNetwork, setSwitchingNetwork] = useState(false);
+
+    // Protocol configurations
+    const protocols = [
+        {
+            name: "Aave",
+            color: "#B6509E",
+            icon: "https://cryptologos.cc/logos/aave-aave-logo.png",
+            mockData: {
+                totalValue: 2450.75,
+                balances: [
+                    {
+                        symbol: "USDC",
+                        name: "USD Coin",
+                        logo: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
+                        balance: "1250.50",
+                        usdValue: 1250.50
+                    },
+                    {
+                        symbol: "DAI",
+                        name: "Dai Stablecoin",
+                        logo: "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.png",
+                        balance: "1200.25",
+                        usdValue: 1200.25
+                    }
+                ]
+            }
+        },
+        {
+            name: "Compound",
+            color: "#00D395",
+            icon: "https://cryptologos.cc/logos/compound-comp-logo.png",
+            mockData: {
+                totalValue: 1890.30,
+                balances: [
+                    {
+                        symbol: "USDT",
+                        name: "Tether USD",
+                        logo: "https://cryptologos.cc/logos/tether-usdt-logo.png",
+                        balance: "1890.30",
+                        usdValue: 1890.30
+                    }
+                ]
+            }
+        },
+        {
+            name: "Uniswap",
+            color: "#FF007A",
+            icon: "https://cryptologos.cc/logos/uniswap-uni-logo.png",
+            mockData: {
+                totalValue: 3200.45,
+                balances: [
+                    {
+                        symbol: "ETH",
+                        name: "Ethereum",
+                        logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+                        balance: "1.25",
+                        usdValue: 3200.45
+                    }
+                ]
+            }
+        }
+    ];
 
     const formatAddress = (address) => {
         if (!address) return '';
@@ -177,12 +240,28 @@ const Teleport = () => {
                 {/* Main content */}
                 <Box sx={{ flex: 1 }}>
                     {isConnected ? (
-                        <UserPortfolio 
-                            address={account} 
-                            chainId={selectedNetwork.chainId}
-                            networkName={selectedNetwork.name}
-                            networkColor={selectedNetwork.color}
-                        />
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 3 }}>
+                            {/* User Portfolio - Leftmost column */}
+                            <UserPortfolio 
+                                address={account} 
+                                chainId={selectedNetwork.chainId}
+                                networkName={selectedNetwork.name}
+                                networkColor={selectedNetwork.color}
+                            />
+                            
+                            {/* Protocol Portfolios - Right columns */}
+                            {protocols.map((protocol) => (
+                                <ProtocolPortfolio
+                                    key={protocol.name}
+                                    protocolName={protocol.name}
+                                    protocolColor={protocol.color}
+                                    protocolIcon={protocol.icon}
+                                    address={account}
+                                    chainId={selectedNetwork.chainId}
+                                    mockData={protocol.mockData}
+                                />
+                            ))}
+                        </Box>
                     ) : (
                         <Paper elevation={3} sx={{ p: 4, borderRadius: 3, textAlign: 'center' }}>
                             <Typography variant="h5" gutterBottom>

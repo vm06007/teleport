@@ -123,12 +123,11 @@ const UserPortfolio = ({ address, chainId = 137, networkName = "Polygon", networ
 
     return (
         <Box sx={{
-            maxWidth: "500px",
-            margin: "0 auto",
             backgroundColor: "#f5f5f5",
             borderRadius: "20px",
             padding: 3,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.1)"
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+            height: "fit-content"
         }}>
             <Typography variant="h4" gutterBottom sx={{ textAlign: "center", mb: 3, fontWeight: 600 }}>
                 User Portfolio
