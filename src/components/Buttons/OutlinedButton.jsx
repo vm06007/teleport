@@ -1,8 +1,21 @@
 import { Button } from "@mui/material";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 
 const OutlinedButton = ({ sx = {}, arrow, children, fit, ...props }) => {
+    const navigate = useNavigate();
+    
+    const handleClick = () => {
+        if (children === "Try Demo") {
+            navigate("/teleport");
+        }
+        // Call the original onClick if provided
+        if (props.onClick) {
+            props.onClick();
+        }
+    };
+
     return (
         <Button
             variant="outlined"
@@ -13,6 +26,7 @@ const OutlinedButton = ({ sx = {}, arrow, children, fit, ...props }) => {
                 width: fit ? "fit-content" : "100%",
                 ...sx,
             }}
+            onClick={handleClick}
             {...props}
         >
             {children}
