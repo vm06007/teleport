@@ -11,6 +11,17 @@ import FantomImg from "../assets/images/sectionChains/fantom.webp";
 import KlaytnImg from "../assets/images/sectionChains/klaytn.webp";
 import AuroraImg from "../assets/images/sectionChains/aurora.webp";
 
+// SectionUnite
+import UniteImg from "../assets/images/sectionUnite/unite-image.webp";
+
+// SectionFeatues
+import MergerImage from "../assets/images/sectionFeatures/merger-protocol.webp";
+import MigrationImage from "../assets/images/sectionFeatures/migration-protocol.webp";
+
+// SectionBehind
+import BehindImage1 from "../assets/images/sectionBehind/api.webp";
+import BehindImage2 from "../assets/images/sectionBehind/grant-program.webp";
+
 // SectionProtocols
 import Near from "../assets/images/sectionProtocols/near.svg";
 import Metamask from "../assets/images/sectionProtocols/metamask.svg";
@@ -47,12 +58,12 @@ export const sectionChainsContent = {
     ],
 };
 
-export const section4Content = {
+export const sectionUniteContent = {
     top: {
         title: "Unite Liquidity",
         subtitle:
             "1inch instantly analyzes thousands of quotes and fees across multiple DEXes to provide users with the best rates.",
-        image: NewsImg,
+        image: UniteImg,
     },
 };
 
@@ -64,25 +75,25 @@ export const section5Content = {
         "The Teleport upgrade makes it easier to manager liquidity across different protocols in one place.",
 };
 
-export const section6Content = {
+export const sectionFeaturesContent = {
     title: "Product Features",
     ITEMS: [
         {
             title: "Liquidity Migration",
             subtitle:
                 "Migrate your liquidity from one protocol to another with ease.",
-            image: Sec6Image1,
+            image: MigrationImage,
         },
         {
             title: "Merging Liquidity",
             subtitle:
                 "Merge your liquidity from multiple protocols into one.",
-            image: Sec6Image3,
+            image: MergerImage,
         },
     ],
 };
 
-export const section7Content = {
+export const sectionBehindContent = {
     title: "Behind The Scenes",
     subtitle: "",
     ITEMS: [
@@ -90,13 +101,13 @@ export const section7Content = {
             title: "1inch APIs",
             subtitle:
                 "Upgraded discovery and routing paths that offers non-custodial asset swaps at the most attractive rates between DeFi protocols.",
-            image: Sec7Image1,
+            image: BehindImage1,
         },
         {
             title: "1inch grant program",
             subtitle:
                 "An initiative that fosters the 1inch Network's growth and incentivizes contributions through grants and other resources.",
-            image: Sec7Image2,
+            image: BehindImage2,
         },
     ],
 };

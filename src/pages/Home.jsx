@@ -4,7 +4,10 @@ import Footer from "../components/Footers/MainFooter";
 import Navbar from "../components/Navbars/MainNavbar";
 import SectionMain from "../containers/SectionMain";
 import SectionTeleport from "../containers/SectionTeleport";
+import SectionFeatures from "../containers/SectionFeatures";
+import SectionUnite from "../containers/SectionUnite";
 import SectionChains from "../containers/SectionChains";
+import SectionBehind from "../containers/SectionBehind";
 import SectionProtocols from "../containers/SectionProtocols";
 
 const Home = () => {
@@ -14,7 +17,10 @@ const Home = () => {
             <SectionMain />
             <SectionTeleport />
             <Box sx={{ bgcolor: "background.default", position: "relative" }}>
+                <SectionFeatures />
+                <SectionUnite />
                 <SectionChains />
+                <SectionBehind />
                 <SectionProtocols />
                 <Footer />
             </Box>
