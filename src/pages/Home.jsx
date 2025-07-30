@@ -4,6 +4,8 @@ import Footer from "../components/Footers/MainFooter";
 import Navbar from "../components/Navbars/MainNavbar";
 import SectionMain from "../containers/SectionMain";
 import SectionTeleport from "../containers/SectionTeleport";
+import SectionChains from "../containers/SectionChains";
+import SectionProtocols from "../containers/SectionProtocols";
 
 const Home = () => {
     return (
@@ -12,6 +14,8 @@ const Home = () => {
             <SectionMain />
             <SectionTeleport />
             <Box sx={{ bgcolor: "background.default", position: "relative" }}>
+                <SectionChains />
+                <SectionProtocols />
                 <Footer />
             </Box>
         </div>
