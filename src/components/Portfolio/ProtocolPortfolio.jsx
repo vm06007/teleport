@@ -83,22 +83,9 @@ const ProtocolPortfolio = ({
             boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
             height: "fit-content"
         }}>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <Avatar
-                    src={protocolIcon}
-                    sx={{ 
-                        width: 32, 
-                        height: 32, 
-                        mr: 1,
-                        backgroundColor: protocolColor 
-                    }}
-                >
-                    {protocolName.charAt(0)}
-                </Avatar>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    {protocolName}
-                </Typography>
-            </Box>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+                {protocolName}
+            </Typography>
             
             <GradientCard elevation={0} protocolColor={protocolColor}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
@@ -143,10 +130,34 @@ const ProtocolPortfolio = ({
                             <CardContent>
                                 <Grid container alignItems="center" spacing={2}>
                                     <Grid item>
+                                        {token.logo ? (
+                                            <Box
+                                                component="img"
+                                                src={token.logo}
+                                                alt={token.symbol}
+                                                sx={{
+                                                    width: 32,
+                                                    height: 32,
+                                                    borderRadius: '50%',
+                                                    objectFit: 'contain',
+                                                    backgroundColor: '#f0f0f0'
+                                                }}
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                    e.target.nextSibling.style.display = 'flex';
+                                                }}
+                                            />
+                                        ) : null}
                                         <Avatar
-                                            src={token.logo}
-                                            alt={token.symbol}
-                                            sx={{ width: 32, height: 32 }}
+                                            sx={{ 
+                                                width: 32, 
+                                                height: 32,
+                                                display: token.logo ? 'none' : 'flex',
+                                                backgroundColor: token.symbol === 'ETH' ? '#627EEA' : 
+                                                               token.symbol === 'USDC' ? '#2775CA' :
+                                                               token.symbol === 'USDT' ? '#26A17B' :
+                                                               token.symbol === 'DAI' ? '#F5AC37' : '#ccc',
+                                            }}
                                         >
                                             {token.symbol.charAt(0)}
                                         </Avatar>
@@ -163,7 +174,7 @@ const ProtocolPortfolio = ({
                                         <Typography variant="body2" align="right">
                                             {parseFloat(token.balance).toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 })} {token.symbol}
                                         </Typography>
-                                        <Typography variant="caption" color="textSecondary" align="right">
+                                        <Typography variant="caption" color="textSecondary" align="left">
                                             ${token.usdValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </Typography>
                                     </Grid>

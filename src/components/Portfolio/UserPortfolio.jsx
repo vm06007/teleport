@@ -129,31 +129,20 @@ const UserPortfolio = ({ address, chainId = 137, networkName = "Polygon", networ
             boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
             height: "fit-content"
         }}>
-            <Typography variant="h4" gutterBottom sx={{ textAlign: "center", mb: 3, fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
                 User Portfolio
             </Typography>
             <GradientCard elevation={0} networkColor={networkColor}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                    <Box sx={{
-                        backgroundColor: "rgba(255,255,255,0.2)",
-                        borderRadius: "50%",
-                        p: 1,
-                        mr: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center"
-                    }}>
-                        <Typography variant="caption" sx={{ fontSize: "10px" }}>🔗</Typography>
-                    </Box>
                     <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        {networkName} Network
+                        Total Value
                     </Typography>
                     <Box sx={{ flexGrow: 1 }} />
                     <Typography variant="body2" sx={{ opacity: 0.9 }}>
                         Portfolio Balance
                     </Typography>
                 </Box>
-                <Typography variant="h2" sx={{ fontWeight: 600, textAlign: "center", my: 2 }}>
+                <Typography variant="h3" sx={{ fontWeight: 600, textAlign: "center", my: 2 }}>
                     ${totalPortfolioValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
                 <Typography variant="body2" sx={{ textAlign: "center", opacity: 0.8 }}>
@@ -178,27 +167,53 @@ const UserPortfolio = ({ address, chainId = 137, networkName = "Polygon", networ
                             <CardContent>
                                 <Grid container alignItems="center" spacing={2}>
                                     <Grid item>
+                                        {token.logo ? (
+                                            <Box
+                                                component="img"
+                                                src={token.logo}
+                                                alt={token.symbol}
+                                                sx={{
+                                                    width: 32,
+                                                    height: 32,
+                                                    borderRadius: '50%',
+                                                    objectFit: 'contain',
+                                                    backgroundColor: '#f0f0f0'
+                                                }}
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                    e.target.nextSibling.style.display = 'flex';
+                                                }}
+                                            />
+                                        ) : null}
                                         <Avatar
-                                            src={token.logo}
-                                            alt={token.symbol}
-                                            sx={{ width: 40, height: 40 }}
+                                            sx={{
+                                                width: 32,
+                                                height: 32,
+                                                display: token.logo ? 'none' : 'flex',
+                                                backgroundColor: token.symbol === 'ETH' ? '#627EEA' :
+                                                               token.symbol === 'USDC' ? '#2775CA' :
+                                                               token.symbol === 'USDT' ? '#26A17B' :
+                                                               token.symbol === 'DAI' ? '#F5AC37' :
+                                                               token.symbol === 'POL' || token.symbol === 'MATIC' ? '#8B7FB8' :
+                                                               token.symbol === 'LINK' ? '#2A5ADA' : '#ccc',
+                                            }}
                                         >
                                             {token.symbol.charAt(0)}
                                         </Avatar>
                                     </Grid>
                                     <Grid item xs>
-                                        <Typography variant="subtitle1" fontWeight="bold">
+                                        <Typography variant="subtitle2" fontWeight="bold">
                                             {token.symbol}
                                         </Typography>
-                                        <Typography variant="body2" color="textSecondary">
+                                        <Typography variant="caption" color="textSecondary">
                                             {token.name}
                                         </Typography>
                                     </Grid>
                                     <Grid item>
-                                        <Typography variant="body1" align="right">
+                                        <Typography variant="body2" align="right">
                                             {parseFloat(token.balance).toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 })} {token.symbol}
                                         </Typography>
-                                        <Typography variant="body2" color="textSecondary" align="right">
+                                        <Typography variant="caption" color="textSecondary" align="left">
                                             ${token.usdValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </Typography>
                                     </Grid>

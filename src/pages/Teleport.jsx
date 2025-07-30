@@ -27,14 +27,14 @@ const Teleport = () => {
                     {
                         symbol: "USDC",
                         name: "USD Coin",
-                        logo: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
+                        logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
                         balance: "1250.50",
                         usdValue: 1250.50
                     },
                     {
                         symbol: "DAI",
                         name: "Dai Stablecoin",
-                        logo: "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.png",
+                        logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
                         balance: "1200.25",
                         usdValue: 1200.25
                     }
@@ -51,7 +51,7 @@ const Teleport = () => {
                     {
                         symbol: "USDT",
                         name: "Tether USD",
-                        logo: "https://cryptologos.cc/logos/tether-usdt-logo.png",
+                        logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
                         balance: "1890.30",
                         usdValue: 1890.30
                     }
@@ -68,7 +68,7 @@ const Teleport = () => {
                     {
                         symbol: "ETH",
                         name: "Ethereum",
-                        logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+                        logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png",
                         balance: "1.25",
                         usdValue: 3200.45
                     }
@@ -240,7 +240,7 @@ const Teleport = () => {
                 {/* Main content */}
                 <Box sx={{ flex: 1 }}>
                     {isConnected ? (
-                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 3 }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 3, alignItems: 'start' }}>
                             {/* User Portfolio - Leftmost column */}
                             <UserPortfolio 
                                 address={account} 
