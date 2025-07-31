@@ -4,8 +4,8 @@ import { styled } from "@mui/material/styles";
 import Web3 from "web3";
 import { fetchBalances, fetchTokenDetails, fetchSpotPrices } from "../../services/portfolioService";
 
-const GradientCard = styled(Card)(({ theme, networkColor }) => ({
-    background: `linear-gradient(135deg, ${networkColor} 0%, ${networkColor}dd 100%)`,
+const GradientCard = styled(Card)(({ theme, $networkColor }) => ({
+    background: `linear-gradient(135deg, ${$networkColor} 0%, ${$networkColor}dd 100%)`,
     color: "white",
     marginBottom: theme.spacing(3),
     borderRadius: "20px",
@@ -38,16 +38,20 @@ const UserPortfolio = ({ address, chainId = 137, networkName = "Polygon", networ
     const fetchPortfolioData = async () => {
         try {
             setLoading(true);
+            console.log("Fetching portfolio data for address:", address, "chainId:", chainId);
 
             // Fetch balances
             const balanceData = await fetchBalances(address, chainId);
+            console.log("Balance data received:", balanceData);
 
             // Filter out tokens with zero balance
             const nonZeroBalances = Object.entries(balanceData).filter(
                 ([_, balance]) => balance !== "0"
             );
+            console.log("Non-zero balances:", nonZeroBalances);
 
             if (nonZeroBalances.length === 0) {
+                console.log("No non-zero balances found");
                 setBalances([]);
                 setTotalPortfolioValue(0);
                 setLoading(false);
@@ -56,9 +60,11 @@ const UserPortfolio = ({ address, chainId = 137, networkName = "Polygon", networ
 
             // Get token addresses
             const tokenAddresses = nonZeroBalances.map(([address]) => address);
+            console.log("Token addresses to fetch details for:", tokenAddresses);
 
             // Fetch token details
             const tokenDetails = await fetchTokenDetails(tokenAddresses, chainId);
+            console.log("Token details received:", tokenDetails);
 
             // Fetch spot prices (pass tokenDetails for symbol-based pricing)
             const prices = await fetchSpotPrices(tokenAddresses, chainId, tokenDetails);
@@ -132,7 +138,7 @@ const UserPortfolio = ({ address, chainId = 137, networkName = "Polygon", networ
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
                 User Portfolio
             </Typography>
-            <GradientCard elevation={0} networkColor={networkColor}>
+            <GradientCard elevation={0} $networkColor={networkColor}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                     <Typography variant="body2" sx={{ opacity: 0.9 }}>
                         Total Value

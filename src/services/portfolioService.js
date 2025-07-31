@@ -7,14 +7,18 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const fetchBalances = async (address, chainId = 137) => {
     try {
+        console.log("Making API call to fetch balances for address:", address, "chainId:", chainId);
         const response = await axios.get(PROXY_URL, {
             params: {
                 url: `https://api.1inch.dev/balance/v1.2/${chainId}/balances/${address}`
-            }
+            },
+            timeout: 10000 // 10 second timeout
         });
+        console.log("Balance API response received:", response.data);
         return response.data;
     } catch (error) {
         console.error("Error fetching balances:", error);
+        console.log("Using fallback mock data");
         // Fallback to mock data if API fails
         return {
             "0x2791bca1f2de4661ed88a30c99a7a9449aa84174": "150000000", // USDC (6 decimals)
@@ -27,12 +31,13 @@ export const fetchBalances = async (address, chainId = 137) => {
 
 export const fetchTokenDetails = async (tokenAddresses, chainId = 137) => {
     try {
-        await delay(1000); // Rate limiting
+        await delay(500); // Rate limiting
         const addressesString = tokenAddresses.join(",");
         const response = await axios.get(PROXY_URL, {
             params: {
                 url: `https://api.1inch.dev/token/v1.2/${chainId}/custom?addresses=${addressesString}`
-            }
+            },
+            timeout: 10000 // 10 second timeout
         });
         return response.data;
     } catch (error) {
@@ -66,12 +71,18 @@ export const fetchTokenDetails = async (tokenAddresses, chainId = 137) => {
 
 export const fetchSpotPrices = async (tokenAddresses, chainId = 137, tokenDetails = {}) => {
     try {
-        await delay(1000); // Rate limiting
+        await delay(500); // Rate limiting
         const addressesString = tokenAddresses.join(",");
+        const apiUrl = `https://api.1inch.dev/price/v1.1/${chainId}/${addressesString}`;
+        console.log("Making spot prices API call to:", apiUrl);
+        console.log("Token addresses:", tokenAddresses);
+        console.log("Chain ID:", chainId);
+        
         const response = await axios.get(PROXY_URL, {
             params: {
-                url: `https://api.1inch.dev/price/v1.1/${chainId}/${addressesString}`
-            }
+                url: apiUrl
+            },
+            timeout: 10000 // 10 second timeout
         });
 
         // Convert prices using token symbols for consistency across networks
@@ -102,6 +113,8 @@ export const fetchSpotPrices = async (tokenAddresses, chainId = 137, tokenDetail
         return convertedPrices;
     } catch (error) {
         console.error("Error fetching spot prices:", error);
+        console.error("Error response:", error.response?.data);
+        console.error("Error status:", error.response?.status);
         
         // Fallback: use symbol-based pricing
         const prices = {};
