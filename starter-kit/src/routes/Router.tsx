@@ -8,6 +8,7 @@ import Loadable from '../layouts/full/shared/loadable/Loadable';
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
 const SamplePage = Loadable(lazy(() => import('../views/sample-page/SamplePage')));
+const Kanban = Loadable(lazy(() => import('../views/apps/kanban/Kanban')));
 
 const Router = [
   {
@@ -16,6 +17,7 @@ const Router = [
     children: [
       { path: '/', exact: true, element: <SamplePage /> },
       { path: '/sample-page', exact: true, element: <SamplePage /> },
+      { path: '/apps/kanban', exact: true, element: <Kanban /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   }

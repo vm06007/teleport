@@ -46,6 +46,12 @@ const SidebarContent: MenuItem[] = [
             icon: "solar:settings-minimalistic-line-duotone",
             id: uniqueId(),
             url: "/sample-page",
+          },
+          {
+            name: "Kanban Board",
+            icon: "solar:clipboard-list-outline",
+            id: uniqueId(),
+            url: "/apps/kanban",
           }
 
         ],

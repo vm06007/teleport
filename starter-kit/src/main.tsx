@@ -6,6 +6,7 @@ import Spinner from './views/spinner/Spinner.tsx'
 import { CustomizerContextProvider } from './context/CustomizerContext.tsx'
 // import './utils/i18n';
 import { DashboardContextProvider } from './context/DashboardContext/DashboardContext.tsx'
+import './api'
 
 createRoot(document.getElementById('root')!).render(
   <DashboardContextProvider>
