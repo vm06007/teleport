@@ -36,28 +36,16 @@ const SidebarContent: MenuItem[] = [
         heading: "Pages",
         children: [
           {
-            name: "Sample Page 1",
-            icon: "solar:home-angle-outline",
+            name: "Dashboard",
+            icon: "solar:widget-3-outline",
             id: uniqueId(),
             url: "/",
-          },
-          {
-            name: "Sample Page 2",
-            icon: "solar:settings-minimalistic-line-duotone",
-            id: uniqueId(),
-            url: "/sample-page",
           },
           {
             name: "Kanban Board",
             icon: "solar:clipboard-list-outline",
             id: uniqueId(),
             url: "/apps/kanban",
-          },
-          {
-            name: "Dashboard 3",
-            icon: "solar:widget-3-outline",
-            id: uniqueId(),
-            url: "/dashboards/dashboard3",
           }
 
         ],
