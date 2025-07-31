@@ -133,11 +133,6 @@ const Header = ({ layoutType }: HeaderPropsType) => {
                 </div>
               )}
 
-              {/* Notification Dropdown */}
-              <Notifications />
-
-              {/* Profile Dropdown */}
-              <Profile />
             </div>
           </Navbar.Collapse>
           {/* Mobile Toggle Icon */}

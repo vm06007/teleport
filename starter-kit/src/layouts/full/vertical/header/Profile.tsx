@@ -22,23 +22,6 @@ const Profile = () => {
           </div>
         )}
       >
-        <div className="px-6">
-          <div className="flex items-center gap-6 pb-5 border-b dark:border-darkborder mt-5 mb-3">
-            <img
-              src={"profileImg"}
-              alt="logo"
-              height="56"
-              width="56"
-              className="rounded-full"
-            />
-            <div>
-              <h5 className="text-15 font-semibold">
-                David McMichael <span className="text-success">Pro</span>
-              </h5>
-              <p className="text-sm text-ld opacity-80">info@crypto.com</p>
-            </div>
-          </div>
-        </div>
         <SimpleBar>
           {profileData.profileDD.map((items, index) => (
             <div key={index} className="px-6 mb-2">

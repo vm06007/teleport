@@ -58,7 +58,7 @@ const MobileHeaderItems = () => {
           {/* Language Dropdown*/}
           {/* <Language /> */}
           {/* Profile Dropdown */}
-          <Profile />
+          {/*<Profile />*/}
         </div>
       </div>
     </Navbar>
