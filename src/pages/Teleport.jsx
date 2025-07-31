@@ -21,25 +21,7 @@ const Teleport = () => {
             name: "Aave",
             color: "#B6509E",
             icon: "https://cryptologos.cc/logos/aave-aave-logo.png",
-            mockData: {
-                totalValue: 2450.75,
-                balances: [
-                    {
-                        symbol: "USDC",
-                        name: "USD Coin",
-                        logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
-                        balance: "1250.50",
-                        usdValue: 1250.50
-                    },
-                    {
-                        symbol: "DAI",
-                        name: "Dai Stablecoin",
-                        logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
-                        balance: "1200.25",
-                        usdValue: 1200.25
-                    }
-                ]
-            }
+            // No mockData - will use real Aave service to fetch live positions
         },
         {
             name: "Compound",

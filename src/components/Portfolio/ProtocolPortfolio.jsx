@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Box, Card, CardContent, Typography, Grid, Avatar, CircularProgress, Chip } from "@mui/material";
+import { Box, Card, CardContent, Typography, Grid, Avatar, CircularProgress, Chip, Button, Collapse } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import { fetchAavePositions, calculateActualBalances, fetchAavePositionBreakdown } from "../../services/aaveService";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 const GradientCard = styled(Card)(({ theme, protocolColor }) => ({
     background: `linear-gradient(135deg, ${protocolColor} 0%, ${protocolColor}dd 100%)`,
@@ -33,6 +36,9 @@ const ProtocolPortfolio = ({
     const [balances, setBalances] = useState([]);
     const [loading, setLoading] = useState(true);
     const [totalProtocolValue, setTotalProtocolValue] = useState(0);
+    const [showBreakdown, setShowBreakdown] = useState(false);
+    const [detailedPositions, setDetailedPositions] = useState([]);
+    const [loadingBreakdown, setLoadingBreakdown] = useState(false);
 
     useEffect(() => {
         if (address) {
@@ -52,19 +58,75 @@ const ProtocolPortfolio = ({
                 return;
             }
 
-            // TODO: Implement actual protocol data fetching
-            // This would involve calling specific protocol APIs
-            // For now, we'll simulate loading
-            setTimeout(() => {
-                setBalances([]);
-                setTotalProtocolValue(0);
-                setLoading(false);
-            }, 1000);
+            // Fetch real Aave positions if this is the Aave protocol
+            if (protocolName.toLowerCase().includes('aave')) {
+                console.log("Fetching real Aave positions for:", address);
+                const positions = await fetchAavePositions(address, chainId);
+                console.log("Aave positions received:", positions);
+                
+                if (positions.length > 0) {
+                    // Calculate actual balances and values
+                    const calculatedPositions = await calculateActualBalances(positions, chainId);
+                    console.log("Calculated positions:", calculatedPositions);
+                    
+                    // Convert to the format expected by the component
+                    const formattedBalances = calculatedPositions.map(position => ({
+                        symbol: position.protocol.split(' ')[0], // Use protocol name as symbol
+                        name: position.protocol,
+                        logo: null, // We'll add logo fetching later
+                        balance: position.supplyBalance > 0 ? position.supplyBalance.toFixed(4) : "N/A",
+                        usdValue: position.supplyValue || 0,
+                        debt: position.variableDebt + position.stableDebt,
+                        debtValue: position.debtValue || 0,
+                        netValue: position.netValue || 0,
+                        protocol: position.protocol,
+                        usageAsCollateral: position.usageAsCollateral,
+                        isProtocolPosition: true // Flag to indicate this is a protocol-level position
+                    }));
+                    
+                    setBalances(formattedBalances);
+                    setTotalProtocolValue(formattedBalances.reduce((sum, pos) => sum + pos.netValue, 0));
+                } else {
+                    setBalances([]);
+                    setTotalProtocolValue(0);
+                }
+            } else {
+                // For other protocols, use mock data for now
+                setTimeout(() => {
+                    setBalances([]);
+                    setTotalProtocolValue(0);
+                    setLoading(false);
+                }, 1000);
+            }
 
         } catch (error) {
             console.error(`Error fetching ${protocolName} data:`, error);
+            setBalances([]);
+            setTotalProtocolValue(0);
+        } finally {
             setLoading(false);
         }
+    };
+
+    const fetchDetailedBreakdown = async () => {
+        if (!address || !protocolName.toLowerCase().includes('aave')) return;
+        
+        try {
+            setLoadingBreakdown(true);
+            const breakdown = await fetchAavePositionBreakdown(address, chainId);
+            setDetailedPositions(breakdown);
+        } catch (error) {
+            console.error("Error fetching detailed breakdown:", error);
+        } finally {
+            setLoadingBreakdown(false);
+        }
+    };
+
+    const handleToggleBreakdown = () => {
+        if (!showBreakdown && detailedPositions.length === 0) {
+            fetchDetailedBreakdown();
+        }
+        setShowBreakdown(!showBreakdown);
     };
 
     if (loading) {
@@ -107,13 +169,25 @@ const ProtocolPortfolio = ({
                     ${totalProtocolValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
                 <Typography variant="body2" sx={{ textAlign: "center", opacity: 0.8 }}>
-                    Liquidity provided
+                    {protocolName.toLowerCase().includes('aave') ? 'Net Value (Supply - Debt)' : 'Liquidity provided'}
                 </Typography>
             </GradientCard>
 
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
-                Positions
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                    Positions
+                </Typography>
+                {protocolName.toLowerCase().includes('aave') && balances.length > 0 && (
+                    <Button
+                        size="small"
+                        onClick={handleToggleBreakdown}
+                        endIcon={showBreakdown ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        sx={{ color: protocolColor }}
+                    >
+                        {showBreakdown ? 'Hide' : 'Show'} Breakdown
+                    </Button>
+                )}
+            </Box>
             
             {balances.length === 0 ? (
                 <Card>
@@ -171,17 +245,135 @@ const ProtocolPortfolio = ({
                                         </Typography>
                                     </Grid>
                                     <Grid item>
-                                        <Typography variant="body2" align="right">
-                                            {parseFloat(token.balance).toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 })} {token.symbol}
-                                        </Typography>
-                                        <Typography variant="caption" color="textSecondary" align="left">
-                                            ${token.usdValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </Typography>
+                                        {token.isProtocolPosition ? (
+                                            <>
+                                                <Typography variant="body2" align="right">
+                                                    Protocol Position
+                                                </Typography>
+                                                <Typography variant="caption" color="textSecondary" align="right">
+                                                    ${token.usdValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </Typography>
+                                                {token.usageAsCollateral && (
+                                                    <Chip 
+                                                        label="Active" 
+                                                        size="small" 
+                                                        sx={{ 
+                                                            backgroundColor: "green",
+                                                            color: "white",
+                                                            fontSize: "0.6rem",
+                                                            mt: 0.5
+                                                        }} 
+                                                    />
+                                                )}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Typography variant="body2" align="right">
+                                                    {parseFloat(token.balance).toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 })} {token.symbol}
+                                                </Typography>
+                                                <Typography variant="caption" color="textSecondary" align="right">
+                                                    ${token.usdValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </Typography>
+                                                {token.debt && token.debt > 0 && (
+                                                    <>
+                                                        <Typography variant="caption" color="error" align="right" display="block">
+                                                            Debt: {parseFloat(token.debt).toFixed(4)} {token.symbol}
+                                                        </Typography>
+                                                        <Typography variant="caption" color="error" align="right">
+                                                            ${token.debtValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                        </Typography>
+                                                    </>
+                                                )}
+                                                {token.usageAsCollateral && (
+                                                    <Chip 
+                                                        label="Collateral" 
+                                                        size="small" 
+                                                        sx={{ 
+                                                            backgroundColor: "green",
+                                                            color: "white",
+                                                            fontSize: "0.6rem",
+                                                            mt: 0.5
+                                                        }} 
+                                                    />
+                                                )}
+                                            </>
+                                        )}
                                     </Grid>
                                 </Grid>
                             </CardContent>
                         </TokenCard>
                     ))}
+                    
+                    {/* Detailed Breakdown for Aave */}
+                    {protocolName.toLowerCase().includes('aave') && (
+                        <Collapse in={showBreakdown}>
+                            <Box sx={{ mt: 2 }}>
+                                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>
+                                    Detailed Breakdown
+                                </Typography>
+                                {loadingBreakdown ? (
+                                    <Box display="flex" justifyContent="center" py={2}>
+                                        <CircularProgress size={20} />
+                                    </Box>
+                                ) : (
+                                    detailedPositions.map((position, index) => (
+                                        <TokenCard key={`breakdown-${index}`}>
+                                            <CardContent>
+                                                <Grid container alignItems="center" spacing={2}>
+                                                    <Grid item>
+                                                        <Avatar
+                                                            sx={{ 
+                                                                width: 32, 
+                                                                height: 32,
+                                                                backgroundColor: position.token.symbol === 'WETH' ? '#627EEA' : 
+                                                                               position.token.symbol === 'USDC' ? '#2775CA' :
+                                                                               position.token.symbol === 'DAI' ? '#F5AC37' : '#ccc',
+                                                            }}
+                                                        >
+                                                            {position.token.symbol.charAt(0)}
+                                                        </Avatar>
+                                                    </Grid>
+                                                    <Grid item xs>
+                                                        <Typography variant="subtitle2" fontWeight="bold">
+                                                            {position.token.symbol}
+                                                        </Typography>
+                                                        <Typography variant="caption" color="textSecondary">
+                                                            {position.token.name}
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid item>
+                                                        <Typography variant="body2" align="right">
+                                                            Supply: ${position.supply.value_usd.toFixed(2)}
+                                                        </Typography>
+                                                        {position.borrow.value_usd > 0 && (
+                                                            <Typography variant="caption" color="error" align="right" display="block">
+                                                                Borrow: ${position.borrow.value_usd.toFixed(2)}
+                                                            </Typography>
+                                                        )}
+                                                        <Typography variant="caption" color="textSecondary" align="right">
+                                                            Net: ${position.net_value_usd.toFixed(2)}
+                                                        </Typography>
+                                                        {position.usage_as_collateral && (
+                                                            <Chip 
+                                                                label="Collateral" 
+                                                                size="small" 
+                                                                sx={{ 
+                                                                    backgroundColor: "green",
+                                                                    color: "white",
+                                                                    fontSize: "0.6rem",
+                                                                    mt: 0.5
+                                                                }} 
+                                                            />
+                                                        )}
+                                                    </Grid>
+                                                </Grid>
+                                            </CardContent>
+                                        </TokenCard>
+                                    ))
+                                )}
+                            </Box>
+                        </Collapse>
+                    )}
                 </Box>
             )}
         </Box>
