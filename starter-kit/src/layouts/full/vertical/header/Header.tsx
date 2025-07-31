@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 import AppLinks from "./AppLinks";
 import Notifications from "./Notifications";
 import Profile from "./Profile";
+import WalletConnection from "./WalletConnection";
 import FullLogo from "../../shared/logo/FullLogo";
 import MobileHeaderItems from "./MobileHeaderItems";
 import { Drawer } from "flowbite-react";
@@ -105,7 +106,8 @@ const Header = ({ layoutType }: HeaderPropsType) => {
 
           <Navbar.Collapse className="xl:block hidden">
             <div className="flex gap-3 items-center">
-              {/* Search   */}
+              {/* Wallet Connection */}
+              <WalletConnection />
 
               {/* Theme Toggle */}
 

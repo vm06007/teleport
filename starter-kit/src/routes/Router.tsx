@@ -16,6 +16,7 @@ const Router = [
     element: <FullLayout />,
     children: [
       { path: '/', exact: true, element: <Dashboard3 /> },
+      { path: '/teleport', exact: true, element: <Dashboard3 /> },
       { path: '/apps/kanban', exact: true, element: <Kanban /> },
       { path: '/dashboards/dashboard3', exact: true, element: <Dashboard3 /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
