@@ -58,10 +58,10 @@ const AnnualProfit = () => {
     <>
       <CardBox>
         <div>
-          <h5 className="card-title">Annual Profit</h5>
+          <h5 className="card-title">Average APY</h5>
           <div className="bg-lightprimary mt-4 overflow-hidden rounded-md mb-1">
             <div className="py-30 px-6 flex justify-between items-center ">
-              <p className="text-ld">Conversion Rate</p>
+              <p className="text-ld">Across Protocols</p>
               <h4 className="text-28">18.4%</h4>
             </div>
             <Chart
