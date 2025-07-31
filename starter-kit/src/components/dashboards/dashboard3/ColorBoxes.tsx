@@ -7,6 +7,7 @@ import CardBox from "src/components/shared/CardBox";
 import { useWallet } from "src/hooks/useWallet";
 import { fetchPortfolioData } from "src/services/portfolioService";
 import { useState, useEffect } from "react";
+import WelcomeCard from "./WelcomeCard";
 const ColorboxData = [
   {
     bg: "primary-gradient",
@@ -58,7 +59,10 @@ const ColorBoxes = () => {
     sparkValue: 0,
     uniswapValue: 0,
     curveValue: 0,
-    oneInchValue: 0
+    oneInchValue: 0,
+    pendleValue: 0,
+    protocolsValue: 0,
+    walletValue: 0
   });
   const [loading, setLoading] = useState(false);
 
@@ -93,10 +97,10 @@ const ColorBoxes = () => {
   const portfolioCards = [
     {
       bg: "primary-gradient",
-      icon: "solar:dollar-minimalistic-linear",
+      icon: "solar:chart-2-bold-duotone",
       color: "bg-primary",
-      title: "Total Portfolio",
-      price: loading ? "..." : formatUSDValue(portfolioData.totalValue),
+      title: "Pendle",
+      price: loading ? "..." : formatUSDValue(portfolioData.pendleValue),
       link: "#",
     },
     {
@@ -132,7 +136,7 @@ const ColorBoxes = () => {
       link: "#",
     },
     {
-      bg: "info-gradient",
+      bg: "secondary-gradient",
       icon: "cryptocurrency:1inch",
       color: "bg-info",
       title: "1inch",
@@ -141,9 +145,17 @@ const ColorBoxes = () => {
     },
   ];
 
-  return (
+    return (
     <>
       <CardBox className="w-full max-w-none">
+        {/* Welcome Card */}
+        <WelcomeCard 
+          totalValue={portfolioData.totalValue}
+          protocolsValue={portfolioData.protocolsValue}
+          walletValue={portfolioData.walletValue}
+          loading={loading}
+        />
+        
         {/* Portfolio Cards */}
         <div className="w-full">
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full">
@@ -165,7 +177,7 @@ const ColorBoxes = () => {
                       {item.title}
                     </p>
                     <h4 className="text-22">{item.price}</h4>
-                                         <Button
+                     <Button
                        as={Link}
                        to={item.link}
                        className="w-fit mx-auto mt-5 bg-white hover:bg-dark text-ld font-semibold hover:text-white shadow-sm py-1 px-1 dark:bg-darkgray dark:hover:bg-dark"

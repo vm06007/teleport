@@ -11,6 +11,9 @@ export interface PortfolioData {
   uniswapValue: number;
   curveValue: number;
   oneInchValue: number;
+  pendleValue: number;
+  protocolsValue: number;
+  walletValue: number;
 }
 
 export const fetchPortfolioData = async (address: string, chainId: number = 1): Promise<PortfolioData> => {
@@ -29,6 +32,7 @@ export const fetchPortfolioData = async (address: string, chainId: number = 1): 
         
         const portfolioData = response.data.result;
         const protocolGroups = portfolioData.by_protocol_group || [];
+        const categories = portfolioData.by_category || [];
         
         // Extract values for different protocols
         const aaveProtocol = protocolGroups.find((p: any) => 
@@ -52,13 +56,28 @@ export const fetchPortfolioData = async (address: string, chainId: number = 1): 
             p.protocol_group_id.toLowerCase().includes('oneinch')
         );
         
+        const pendleProtocol = protocolGroups.find((p: any) => 
+            p.protocol_group_id.toLowerCase().includes('pendle')
+        );
+        
+        // Calculate protocols value vs wallet value
+        const protocolsCategory = categories.find((c: any) => c.category_id === 'protocols');
+        const tokensCategory = categories.find((c: any) => c.category_id === 'tokens');
+        const nativeCategory = categories.find((c: any) => c.category_id === 'native');
+        
+        const protocolsValue = protocolsCategory?.value_usd || 0;
+        const walletValue = (tokensCategory?.value_usd || 0) + (nativeCategory?.value_usd || 0);
+        
         return {
             totalValue: portfolioData.total || 0,
             aaveValue: aaveProtocol?.value_usd || 0,
             sparkValue: sparkProtocol?.value_usd || 0,
             uniswapValue: uniswapProtocol?.value_usd || 0,
             curveValue: curveProtocol?.value_usd || 0,
-            oneInchValue: oneInchProtocol?.value_usd || 0
+            oneInchValue: oneInchProtocol?.value_usd || 0,
+            pendleValue: pendleProtocol?.value_usd || 0,
+            protocolsValue: protocolsValue,
+            walletValue: walletValue
         };
         
     } catch (error) {
@@ -71,7 +90,10 @@ export const fetchPortfolioData = async (address: string, chainId: number = 1): 
             sparkValue: 60837.12,
             uniswapValue: 0,
             curveValue: 122650.93,
-            oneInchValue: 0
+            oneInchValue: 0,
+            pendleValue: 50403.35,
+            protocolsValue: 268856.03,
+            walletValue: 18215.59
         };
     }
 }; 
