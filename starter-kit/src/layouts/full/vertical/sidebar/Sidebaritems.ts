@@ -52,6 +52,12 @@ const SidebarContent: MenuItem[] = [
             icon: "solar:clipboard-list-outline",
             id: uniqueId(),
             url: "/apps/kanban",
+          },
+          {
+            name: "Dashboard 3",
+            icon: "solar:widget-3-outline",
+            id: uniqueId(),
+            url: "/dashboards/dashboard3",
           }
 
         ],
