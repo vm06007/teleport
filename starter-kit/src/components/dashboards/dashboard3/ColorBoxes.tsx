@@ -55,9 +55,10 @@ const ColorBoxes = () => {
   const [portfolioData, setPortfolioData] = useState({
     totalValue: 0,
     aaveValue: 0,
-    compoundValue: 0,
+    sparkValue: 0,
     uniswapValue: 0,
-    curveValue: 0
+    curveValue: 0,
+    oneInchValue: 0
   });
   const [loading, setLoading] = useState(false);
 
@@ -69,7 +70,7 @@ const ColorBoxes = () => {
 
   const fetchPortfolioDataFromService = async () => {
     if (!account || !chainId) return;
-    
+
     try {
       setLoading(true);
       const data = await fetchPortfolioData(account, chainId);
@@ -81,13 +82,21 @@ const ColorBoxes = () => {
     }
   };
 
+  const formatUSDValue = (value: number) => {
+    if (value >= 1000) {
+      return `$${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+    } else {
+      return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+  };
+
   const portfolioCards = [
     {
       bg: "primary-gradient",
       icon: "solar:dollar-minimalistic-linear",
       color: "bg-primary",
       title: "Total Portfolio",
-      price: loading ? "Loading..." : `$${portfolioData.totalValue.toLocaleString()}`,
+      price: loading ? "..." : formatUSDValue(portfolioData.totalValue),
       link: "#",
     },
     {
@@ -95,7 +104,7 @@ const ColorBoxes = () => {
       icon: "solar:recive-twice-square-linear",
       color: "bg-warning",
       title: "Aave",
-      price: loading ? "Loading..." : `$${portfolioData.aaveValue.toLocaleString()}`,
+      price: loading ? "..." : formatUSDValue(portfolioData.aaveValue),
       link: "#",
     },
     {
@@ -103,15 +112,15 @@ const ColorBoxes = () => {
       icon: "ic:outline-backpack",
       color: "bg-secondary",
       title: "Curve",
-      price: loading ? "Loading..." : `$${portfolioData.curveValue.toLocaleString()}`,
+      price: loading ? "..." : formatUSDValue(portfolioData.curveValue),
       link: "#",
     },
     {
       bg: "error-gradient",
-      icon: "ic:baseline-sync-problem",
+      icon: "solar:flash-bold-duotone",
       color: "bg-error",
-      title: "Compound",
-      price: loading ? "Loading..." : `$${portfolioData.compoundValue.toLocaleString()}`,
+      title: "Spark",
+      price: loading ? "..." : formatUSDValue(portfolioData.sparkValue),
       link: "#",
     },
     {
@@ -119,20 +128,27 @@ const ColorBoxes = () => {
       icon: "ic:outline-forest",
       color: "bg-success",
       title: "Uniswap",
-      price: loading ? "Loading..." : `$${portfolioData.uniswapValue.toLocaleString()}`,
+      price: loading ? "..." : formatUSDValue(portfolioData.uniswapValue),
+      link: "#",
+    },
+    {
+      bg: "info-gradient",
+      icon: "cryptocurrency:1inch",
+      color: "bg-info",
+      title: "1inch",
+      price: loading ? "..." : formatUSDValue(portfolioData.oneInchValue),
       link: "#",
     },
   ];
 
   return (
     <>
-      <CardBox>
+      <CardBox className="w-full max-w-none">
         {/* Portfolio Cards */}
-        <div className="overflow-x-auto">
-          <SimpleBar>
-            <div className="flex gap-30">
-              {portfolioCards.map((item, index) => (
-                <div className="lg:basis-1/5 md:basis-1/4 basis-full lg:shrink shrink-0" key={index}>
+        <div className="w-full">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 w-full">
+            {portfolioCards.map((item, index) => (
+              <div className="w-full" key={index}>
                   <div
                     className={`text-center px-5 py-30 rounded-tw ${item.bg}`}
                   >
@@ -149,23 +165,22 @@ const ColorBoxes = () => {
                       {item.title}
                     </p>
                     <h4 className="text-22">{item.price}</h4>
-                    <Button
-                      as={Link}
-                      to={item.link}
-                      className="w-fit mx-auto mt-5 bg-white hover:bg-dark text-ld font-semibold hover:text-white shadow-sm py-1 px-1 dark:bg-darkgray dark:hover:bg-dark"
-                      size="xs"
-                    >
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </SimpleBar>
-        </div>
-      </CardBox>
-    </>
-  );
+                                         <Button
+                       as={Link}
+                       to={item.link}
+                       className="w-fit mx-auto mt-5 bg-white hover:bg-dark text-ld font-semibold hover:text-white shadow-sm py-1 px-1 dark:bg-darkgray dark:hover:bg-dark"
+                       size="xs"
+                     >
+                       View Details
+                     </Button>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           </div>
+         </CardBox>
+       </>
+     );
 };
 
 export default ColorBoxes;

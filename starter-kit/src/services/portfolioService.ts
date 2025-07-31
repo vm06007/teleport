@@ -5,11 +5,12 @@ const PROXY_URL = "http://localhost:5003/proxy";
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export interface PortfolioData {
-    totalValue: number;
-    aaveValue: number;
-    compoundValue: number;
-    uniswapValue: number;
-    curveValue: number;
+  totalValue: number;
+  aaveValue: number;
+  sparkValue: number;
+  uniswapValue: number;
+  curveValue: number;
+  oneInchValue: number;
 }
 
 export const fetchPortfolioData = async (address: string, chainId: number = 1): Promise<PortfolioData> => {
@@ -34,8 +35,8 @@ export const fetchPortfolioData = async (address: string, chainId: number = 1): 
             p.protocol_group_id.toLowerCase().includes('aave')
         );
         
-        const compoundProtocol = protocolGroups.find((p: any) => 
-            p.protocol_group_id.toLowerCase().includes('compound')
+        const sparkProtocol = protocolGroups.find((p: any) => 
+            p.protocol_group_id.toLowerCase().includes('spark')
         );
         
         const uniswapProtocol = protocolGroups.find((p: any) => 
@@ -46,12 +47,18 @@ export const fetchPortfolioData = async (address: string, chainId: number = 1): 
             p.protocol_group_id.toLowerCase().includes('curve')
         );
         
+        const oneInchProtocol = protocolGroups.find((p: any) => 
+            p.protocol_group_id.toLowerCase().includes('1inch') ||
+            p.protocol_group_id.toLowerCase().includes('oneinch')
+        );
+        
         return {
             totalValue: portfolioData.total || 0,
             aaveValue: aaveProtocol?.value_usd || 0,
-            compoundValue: compoundProtocol?.value_usd || 0,
+            sparkValue: sparkProtocol?.value_usd || 0,
             uniswapValue: uniswapProtocol?.value_usd || 0,
-            curveValue: curveProtocol?.value_usd || 0
+            curveValue: curveProtocol?.value_usd || 0,
+            oneInchValue: oneInchProtocol?.value_usd || 0
         };
         
     } catch (error) {
@@ -61,9 +68,10 @@ export const fetchPortfolioData = async (address: string, chainId: number = 1): 
         return {
             totalValue: 287071.62,
             aaveValue: 33288.73,
-            compoundValue: 0.000046,
+            sparkValue: 60837.12,
             uniswapValue: 0,
-            curveValue: 122650.93
+            curveValue: 122650.93,
+            oneInchValue: 0
         };
     }
 }; 
