@@ -1,5 +1,3 @@
-import RevenueByProduct from "src/components/dashboards/dashboard3/RevenueByProduct";
-import TotalSettelment from "src/components/dashboards/dashboard3/TotalSettelment";
 import AnnualProfit from "src/components/dashboards/dashboard3/AnnualProfit";
 import RevenueForcastChart from "src/components/dashboards/dashboard3/RevenueForcastChart";
 import ColorBoxes from "src/components/dashboards/dashboard3/ColorBoxes";
@@ -19,12 +17,6 @@ const Dashboard3 = () => {
           </div>
           <div className="lg:col-span-4 col-span-12">
             <AnnualProfit />
-          </div>
-          <div className="lg:col-span-8 col-span-12">
-            <RevenueByProduct />
-          </div>
-          <div className="lg:col-span-4 col-span-12">
-            <TotalSettelment />
           </div>
           <div className="col-span-12">
             <KanbanDataContextProvider>
