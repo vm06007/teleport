@@ -6,6 +6,7 @@ import { useWallet } from "src/hooks/useWallet";
 import { fetchPortfolioData } from "src/services/portfolioService";
 import { useState, useEffect } from "react";
 import WelcomeCard from "./WelcomeCard";
+import RevenueForcastChart from "./RevenueForcastChart";
 
 const ColorBoxes = () => {
     const { account, chainId } = useWallet();
@@ -22,6 +23,7 @@ const ColorBoxes = () => {
         protocolsValue: 0,
         walletValue: 0
     });
+    const [protocolBreakdowns, setProtocolBreakdowns] = useState<any>({});
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -35,8 +37,108 @@ const ColorBoxes = () => {
 
         try {
             setLoading(true);
-            const data = await fetchPortfolioData(account, chainId);
-            setPortfolioData(data);
+
+            // Fetch both portfolio data and detailed breakdown
+            const [portfolioData, snapshotResponse] = await Promise.all([
+                fetchPortfolioData(account, chainId),
+                fetch(`http://localhost:5003/proxy?url=https://api.1inch.dev/portfolio/portfolio/v5.0/protocols/snapshot?addresses=${account}&chain_id=${chainId}`)
+                    .then(res => res.json())
+            ]);
+
+            console.log("📊 Fetched Portfolio Data:", portfolioData);
+            console.log("📊 Fetched Snapshot Data:", snapshotResponse);
+
+            const protocols = snapshotResponse.result || [];
+            const stablecoins = ['usds', 'usdc', 'usdt', 'dai', 'busd', 'frax', 'usdp', 'tusd', 'usdn'];
+
+                        // Helper function to calculate protocol breakdown
+            const calculateProtocolBreakdown = (protocolNames: string[]) => {
+                console.log(`🔍 Calculating breakdown for protocols:`, protocolNames);
+
+                const matchingProtocols = protocols.filter((protocol: any) => {
+                    const protocolName = protocol.protocol_group_name?.toLowerCase() || '';
+                    const matches = protocolNames.some(name =>
+                        protocolName.includes(name) || name.includes(protocolName)
+                    );
+
+                    if (matches) {
+                        console.log(`✅ Found matching protocol: ${protocol.protocol_group_name} for ${protocolNames.join(', ')}`);
+                    }
+
+                    return matches;
+                });
+
+                console.log(`📊 Found ${matchingProtocols.length} matching protocols for ${protocolNames.join(', ')}`);
+
+                let totalSupplied = 0;
+                let totalRewards = 0;
+
+                matchingProtocols.forEach((protocol: any) => {
+                    // Calculate supplied using stablecoin logic
+                    const suppliedAmount = (protocol.underlying_tokens || []).reduce((sum: number, token: any) => {
+                        const tokenSymbol = (token.symbol || '').toLowerCase();
+                        const isStablecoin = stablecoins.some(stable => tokenSymbol.includes(stable));
+
+                        if (isStablecoin) {
+                            return sum + (token.amount || 0); // 1:1 conversion
+                        } else {
+                            return sum + (token.value_usd || 0); // Market price
+                        }
+                    }, 0);
+
+                    // Calculate rewards
+                    const rewardsAmount = (protocol.reward_tokens || []).reduce((sum: number, token: any) => {
+                        return sum + (token.value_usd || 0);
+                    }, 0);
+
+                    console.log(`💰 ${protocol.protocol_group_name}: supplied=${suppliedAmount}, rewards=${rewardsAmount}`);
+
+                    totalSupplied += suppliedAmount;
+                    totalRewards += rewardsAmount;
+                });
+
+                const result = {
+                    supplied: totalSupplied,
+                    interest: totalRewards,
+                    total: totalSupplied + totalRewards,
+                    borrowed: 0,  // Placeholder - will implement later
+                    debt: 0       // Placeholder - will implement later
+                };
+
+                console.log(`📊 Final result for ${protocolNames.join(', ')}:`, result);
+                return result;
+            };
+
+            // Calculate breakdowns for all protocols
+            const breakdowns = {
+                aave: calculateProtocolBreakdown(['aave']),
+                spark: calculateProtocolBreakdown(['spark']),
+                uniswap: calculateProtocolBreakdown(['uniswap']),
+                curve: calculateProtocolBreakdown(['curve']),
+                oneInch: calculateProtocolBreakdown(['1inch']),
+                pendle: calculateProtocolBreakdown(['pendle'])
+            };
+
+            console.log("📊 Calculated Breakdowns:", breakdowns);
+
+            // Update portfolio data to use calculated totals
+            const updatedPortfolioData = {
+                ...portfolioData,
+                aaveValue: breakdowns.aave.total,
+                sparkValue: breakdowns.spark.total,
+                uniswapValue: breakdowns.uniswap.total,
+                curveValue: breakdowns.curve.total,
+                oneInchValue: breakdowns.oneInch.total,
+                pendleValue: breakdowns.pendle.total,
+                protocolsValue: breakdowns.aave.total + breakdowns.spark.total + breakdowns.uniswap.total +
+                               breakdowns.curve.total + breakdowns.oneInch.total + breakdowns.pendle.total
+            };
+
+            updatedPortfolioData.totalValue = updatedPortfolioData.protocolsValue + updatedPortfolioData.walletValue;
+
+            setPortfolioData(updatedPortfolioData);
+            setProtocolBreakdowns(breakdowns);
+
         } catch (error) {
             console.error("Error fetching portfolio data:", error);
         } finally {
@@ -52,108 +154,7 @@ const ColorBoxes = () => {
         }
     };
 
-    const fetchProtocolBreakdown = async (protocolTitle: string) => {
-        if (!account || !chainId) return null;
 
-        try {
-            console.log(`🔍 Fetching breakdown for ${protocolTitle}...`);
-
-            // Get snapshot data for supplied amounts (same as interest table)
-            const snapshotResponse = await fetch(`http://localhost:5003/proxy?url=https://api.1inch.dev/portfolio/portfolio/v5.0/protocols/snapshot?addresses=${account}&chain_id=${chainId}`);
-            const snapshotData = await snapshotResponse.json();
-
-            if (!snapshotData.result) return null;
-
-            const protocols = snapshotData.result || [];
-
-            // Find protocols matching the selected protocol (handle version suffixes)
-            const matchingProtocols = protocols.filter((protocol: any) => {
-                const protocolName = protocol.protocol_group_name?.toLowerCase() || '';
-                const titleLower = protocolTitle.toLowerCase();
-
-                return protocolName.includes(titleLower) || titleLower.includes(protocolName) ||
-                    (titleLower.includes('aave') && protocolName.includes('aave')) ||
-                    (titleLower.includes('pendle') && protocolName.includes('pendle')) ||
-                    (titleLower.includes('uniswap') && protocolName.includes('uniswap')) ||
-                    (titleLower.includes('curve') && protocolName.includes('curve')) ||
-                    (titleLower.includes('spark') && protocolName.includes('spark')) ||
-                    (titleLower.includes('1inch') && protocolName.includes('1inch'));
-            });
-
-            console.log(`Found ${matchingProtocols.length} matching protocols for ${protocolTitle}:`, matchingProtocols.map((p: any) => p.protocol_group_name));
-
-            if (matchingProtocols.length === 0) {
-                return {
-                    supplied: 0,
-                    interest: 0,
-                    borrowed: 0, // Placeholder for future implementation
-                    debt: 0      // Placeholder for future implementation
-                };
-            }
-
-            // Calculate total supplied amount (same logic as interest table)
-            const stablecoins = ['usds', 'usdc', 'usdt', 'dai', 'busd', 'frax', 'usdp', 'tusd', 'usdn'];
-
-            let totalSupplied = 0;
-
-            matchingProtocols.forEach((protocol: any) => {
-                // Calculate supplied amount from underlying tokens
-                const suppliedAmount = (protocol.underlying_tokens || []).reduce((sum: number, token: any) => {
-                    const tokenSymbol = (token.symbol || '').toLowerCase();
-                    const isStablecoin = stablecoins.some(stable => tokenSymbol.includes(stable));
-                    const priceToUse = isStablecoin ? 1.0 : (token.price_usd || 0);
-                    const tokenValue = (token.amount || 0) * priceToUse;
-                    return sum + tokenValue;
-                }, 0);
-
-                totalSupplied += suppliedAmount;
-            });
-
-            // Get EXACT current value from protocol cards (same as interest table)
-            let currentValueFromCards = 0;
-            const protocolName = protocolTitle.toLowerCase();
-            if (protocolName.includes('spark')) {
-                currentValueFromCards = portfolioData.sparkValue;
-            } else if (protocolName.includes('aave')) {
-                currentValueFromCards = portfolioData.aaveValue;
-            } else if (protocolName.includes('pendle')) {
-                currentValueFromCards = portfolioData.pendleValue;
-            } else if (protocolName.includes('uniswap')) {
-                currentValueFromCards = portfolioData.uniswapValue;
-            } else if (protocolName.includes('curve')) {
-                currentValueFromCards = portfolioData.curveValue;
-            } else if (protocolName.includes('1inch')) {
-                currentValueFromCards = portfolioData.oneInchValue;
-            }
-
-            // Interest = Protocol Card Value - Supplied (EXACT same as interest table)
-            const interest = Math.max(0, currentValueFromCards - totalSupplied);
-
-            console.log(`💰 ${protocolTitle} Breakdown:`, {
-                supplied: totalSupplied,
-                currentValueFromCards: currentValueFromCards,
-                interest: interest,
-                borrowed: 0,
-                debt: 0
-            });
-
-            return {
-                supplied: totalSupplied,
-                interest: interest,
-                borrowed: 0, // Placeholder - will be implemented later
-                debt: 0      // Placeholder - will be implemented later
-            };
-
-        } catch (error) {
-            console.error(`Error fetching ${protocolTitle} breakdown:`, error);
-            return {
-                supplied: 0,
-                interest: 0,
-                borrowed: 0,
-                debt: 0
-            };
-        }
-    };
 
     const portfolioCards = [
         {
@@ -279,18 +280,32 @@ const ColorBoxes = () => {
                                     </p>
                                     <h4 className="text-22">{item.price}</h4>
                                     <div className="flex items-center justify-center gap-2 mt-5">
-                                        <Button
-                                            onClick={async () => {
-                                                setSelectedProtocol(item);
-                                                // Fetch real protocol breakdown data
-                                                const breakdown = await fetchProtocolBreakdown(item.title);
-                                                setProtocolBreakdown(breakdown);
-                                            }}
-                                            className="bg-white hover:bg-dark text-ld font-semibold hover:text-white shadow-sm py-1 px-2 dark:bg-darkgray dark:hover:bg-dark"
-                                            size="xs"
-                                        >
-                                            Details
-                                        </Button>
+                                                                <Button
+                            onClick={() => {
+                                setSelectedProtocol(item);
+                                // Use pre-calculated breakdown data
+                                const protocolKey = item.title.toLowerCase();
+                                const breakdown = protocolBreakdowns[protocolKey === '1inch' ? 'oneInch' : protocolKey];
+
+                                console.log("🔍 Opening modal for:", item.title);
+                                console.log("🔍 Protocol key:", protocolKey);
+                                console.log("🔍 Available breakdowns:", Object.keys(protocolBreakdowns));
+                                console.log("🔍 Selected breakdown:", breakdown);
+
+                                // Safety check - provide default if breakdown is undefined
+                                setProtocolBreakdown(breakdown || {
+                                    supplied: 0,
+                                    interest: 0,
+                                    total: 0,
+                                    borrowed: 0,
+                                    debt: 0
+                                });
+                            }}
+                            className="bg-white hover:bg-dark text-ld font-semibold hover:text-white shadow-sm py-1 px-2 dark:bg-darkgray dark:hover:bg-dark"
+                            size="xs"
+                        >
+                            Details
+                        </Button>
                                         <Button
                                             onClick={() => window.open(item.externalLink, '_blank', 'noopener,noreferrer')}
                                             className="bg-white hover:bg-dark shadow-sm p-1 dark:bg-darkgray dark:hover:bg-dark group"
@@ -348,19 +363,27 @@ const ColorBoxes = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <div className="space-y-6">
-                        {/* Current Portfolio Value */}
-                        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                            <h4 className="text-sm font-medium text-gray-500 mb-2">Current Portfolio Value</h4>
-                            <p className="text-2xl font-bold">{selectedProtocol?.price}</p>
-                        </div>
+                                                                          {/* Current Portfolio Value */}
+                         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                             <h4 className="text-sm font-medium text-gray-500 mb-2">Current Portfolio Value</h4>
+                             <p className="text-2xl font-bold">
+                                 {protocolBreakdown ?
+                                     `$${Math.ceil(protocolBreakdown.supplied + protocolBreakdown.interest).toLocaleString('en-US', { maximumFractionDigits: 0 })}` :
+                                     selectedProtocol?.price
+                                 }
+                             </p>
+                         </div>
 
-                        {/* Portfolio Breakdown - Real Data */}
-                        {protocolBreakdown ? (
+                                                {/* Portfolio Breakdown - Pre-calculated Data */}
+                        {protocolBreakdown && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                                     <h5 className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">Supplied</h5>
                                     <p className="text-lg font-semibold">
-                                        ${protocolBreakdown.supplied.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                                        ${protocolBreakdown.supplied < 100 ?
+                                            protocolBreakdown.supplied.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) :
+                                            protocolBreakdown.supplied.toLocaleString('en-US', { maximumFractionDigits: 0 })
+                                        }
                                     </p>
                                     <p className="text-xs text-gray-500">Lending + farming positions</p>
                                 </div>
@@ -368,15 +391,13 @@ const ColorBoxes = () => {
                                 <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                                     <h5 className="text-sm font-medium text-green-600 dark:text-green-400 mb-1">Interest Earned</h5>
                                     <p className="text-lg font-semibold">
-                                        ${protocolBreakdown.interest.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                                        ${protocolBreakdown.interest < 100 ?
+                                            protocolBreakdown.interest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) :
+                                            protocolBreakdown.interest.toLocaleString('en-US', { maximumFractionDigits: 0 })
+                                        }
                                     </p>
                                     <p className="text-xs text-gray-500">Available rewards</p>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-4">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                                <p className="text-sm text-gray-500 mt-2">Loading breakdown...</p>
                             </div>
                         )}
 
@@ -447,6 +468,9 @@ const ColorBoxes = () => {
                     </div>
                 </Modal.Body>
             </Modal>
+
+            {/* Interest Table with pre-calculated data */}
+            <RevenueForcastChart protocolBreakdowns={protocolBreakdowns} />
         </>
     );
 };

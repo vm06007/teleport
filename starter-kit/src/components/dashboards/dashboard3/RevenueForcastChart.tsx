@@ -352,7 +352,11 @@ const columns = [
     ),
   }),
 ];
-const RevenueForcastChart = () => {
+interface RevenueForcastChartProps {
+  protocolBreakdowns?: any;
+}
+
+const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) => {
   const { account, isConnected, chainId } = useWallet();
   const [data, setData] = useState<TableTypeRowSelection[]>(basicTableData);
   const [loading, setLoading] = useState(false);
@@ -360,6 +364,59 @@ const RevenueForcastChart = () => {
 
   // Fetch real portfolio data and calculate claimable interest
   const fetchRealPortfolioData = async () => {
+    // If we have pre-calculated breakdowns, use them instead of fetching
+    if (protocolBreakdowns && Object.keys(protocolBreakdowns).length > 0) {
+      console.log("📊 Using pre-calculated protocol breakdowns:", protocolBreakdowns);
+      
+      const tableData: TableTypeRowSelection[] = [];
+      
+      // Convert pre-calculated breakdowns to table format
+      Object.entries(protocolBreakdowns).forEach(([key, breakdown]: [string, any]) => {
+        if (breakdown.supplied > 0 || breakdown.interest > 0) {
+          const protocolName = key.charAt(0).toUpperCase() + key.slice(1);
+          const displayName = key === 'oneInch' ? '1inch' : protocolName;
+          
+          const config = protocolsConfig.find(p => 
+            p.name.toLowerCase().includes(key.toLowerCase()) ||
+            (key === 'oneInch' && p.name.toLowerCase().includes('1inch'))
+          );
+          
+          if (config) {
+            // Create default tokens based on protocol
+            const tokens = key === 'uniswap' ? [
+              { id: "1", symbol: "ETH", color: "secondary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png" },
+              { id: "2", symbol: "WISE", color: "primary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x66a0f676479cee1d7373f3dc2e2952778bff5bd6/logo.png" }
+            ] : [
+              { id: "1", symbol: "USDS", color: "primary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdc035d45d973e3ec169d2276ddab16f1e407384f/logo.png" },
+              { id: "2", symbol: "ETH", color: "secondary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png" }
+            ];
+            
+            tableData.push({
+              logo: config.logo,
+              protocol: displayName === 'Uniswap' ? 'Uniswap V4' : displayName,
+              chain: config.chain,
+              protocolIcon: config.icon,
+              tokens: tokens,
+              apy: breakdown.supplied > 0 ? 
+                `${((breakdown.interest / breakdown.supplied) * 100).toFixed(1)}%` : '0.0%',
+              supplied: breakdown.supplied < 100 ? 
+                `$${breakdown.supplied.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
+                `$${breakdown.supplied.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
+              claimableInterest: breakdown.interest < 100 ? 
+                `$${breakdown.interest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
+                `$${breakdown.interest.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
+              status: breakdown.interest > 0 ? "Active" : "No Profit",
+              statuscolor: breakdown.interest > 0 ? "success" : "warning"
+            });
+          }
+        }
+      });
+      
+      console.log("📊 Generated table data:", tableData);
+      setData(tableData);
+      setLoading(false);
+      return;
+    }
     if (!account || !isConnected) {
       console.log("No wallet connected, using fallback data");
       setData(basicTableData);
@@ -439,24 +496,35 @@ const RevenueForcastChart = () => {
           const suppliedAmount = (protocol.underlying_tokens || []).reduce((sum: number, token: any) => {
             const tokenSymbol = (token.symbol || '').toLowerCase();
             const isStablecoin = stablecoins.some(stable => tokenSymbol.includes(stable));
-            const priceToUse = isStablecoin ? 1.0 : (token.price_usd || 0);
-            const tokenValue = (token.amount || 0) * priceToUse;
-
-            console.log(`📋 Token ${token.symbol}: ${token.amount} × $${priceToUse} = $${tokenValue}`);
-            return sum + tokenValue;
+            
+            if (isStablecoin) {
+              // For stablecoins, use 1:1 conversion (amount * 1.0) - same as modal
+              const tokenValue = token.amount || 0;
+              console.log(`📋 Token ${token.symbol} (stablecoin): ${token.amount} = $${tokenValue}`);
+              return sum + tokenValue;
+            } else {
+              // For non-stablecoins, use the API's value_usd - same as modal
+              const tokenValue = token.value_usd || 0;
+              console.log(`📋 Token ${token.symbol} (non-stablecoin): value_usd = $${tokenValue}`);
+              return sum + tokenValue;
+            }
           }, 0);
 
           console.log('📋 Supplied Amount (from snapshot tokens):', suppliedAmount);
 
-          // Step 3: Calculate Interest = Current Value - Supplied Amount
-          const claimableInterest = Math.max(0, currentValue - suppliedAmount);
+          // Step 3: Calculate Interest from actual reward tokens (same as modal)
+          const claimableInterest = (protocol.reward_tokens || []).reduce((sum: number, token: any) => {
+            return sum + (token.value_usd || 0);
+          }, 0);
+          
           const roi = suppliedAmount > 0 ? (claimableInterest / suppliedAmount) * 100 : 0;
 
-          console.log('💰 Simple Interest Calculation:');
+          console.log('💰 Reward Tokens Interest Calculation for', protocolName);
           console.log('  Protocol Card Value:', currentValue);
           console.log('  Supplied Amount:', suppliedAmount);
-          console.log('  Interest = Card Value - Supplied');
-          console.log('  Interest =', currentValue, '-', suppliedAmount, '=', claimableInterest);
+          console.log('  Raw reward_tokens:', protocol.reward_tokens);
+          console.log('  Interest = Sum of reward_tokens.value_usd');
+          console.log('  Interest =', claimableInterest, '(from reward tokens)');
 
           console.log(`✅ ${protocolName} Final Results:`, {
             currentValue: '$' + currentValue.toFixed(0),
@@ -575,13 +643,26 @@ const RevenueForcastChart = () => {
             acc[protocolKey] = {
               ...item,
               suppliedAmountRaw: 0, // Track raw number for summing
-              currentValueRaw: protocolCardValue // Use protocol card value
+              currentValueRaw: protocolCardValue, // Use protocol card value
+              claimableInterestRaw: 0 // Track raw interest for summing
             };
           }
 
-          // Sum the supplied amounts (parse back from formatted string)
+          // Sum the supplied amounts and claimable interest (parse back from formatted string)
           const suppliedAmount = parseFloat(item.supplied.replace(/[$,]/g, ''));
+          const claimableAmount = parseFloat(item.claimableInterest.replace(/[$,]/g, ''));
+          
+          if (protocolKey.includes('uniswap')) {
+            console.log(`🔍 Adding to ${protocolKey}:`, {
+              suppliedAmount,
+              claimableAmount,
+              prevSuppliedRaw: acc[protocolKey].suppliedAmountRaw,
+              prevClaimableRaw: acc[protocolKey].claimableInterestRaw
+            });
+          }
+          
           acc[protocolKey].suppliedAmountRaw += suppliedAmount;
+          acc[protocolKey].claimableInterestRaw += claimableAmount;
 
           return acc;
         }, {});
@@ -590,19 +671,24 @@ const RevenueForcastChart = () => {
         const consolidatedData = Object.values(groupedData).map((item: any) => {
           const currentValue = item.currentValueRaw;
           const totalSupplied = item.suppliedAmountRaw;
-          const interest = Math.max(0, currentValue - totalSupplied);
+          const interest = item.claimableInterestRaw; // Use the already calculated reward tokens sum
           const roi = totalSupplied > 0 ? (interest / totalSupplied) * 100 : 0;
 
           console.log(`🎯 ${item.protocol} CONSOLIDATED:`);
           console.log(`  Protocol Card Value: $${currentValue.toLocaleString()}`);
           console.log(`  Total Supplied: $${totalSupplied.toLocaleString()}`);
-          console.log(`  Interest: $${interest.toLocaleString()}`);
+          console.log(`  Interest (from claimableInterestRaw): $${interest.toLocaleString()}`);
+          console.log(`  Raw claimableInterestRaw value:`, item.claimableInterestRaw);
 
           return {
             ...item,
-            supplied: `$${Math.max(0, totalSupplied).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+            supplied: totalSupplied < 100 ? 
+              `$${totalSupplied.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
+              `$${Math.max(0, totalSupplied).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
             currentValue: `$${currentValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-            claimableInterest: `$${Math.max(0, interest).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+            claimableInterest: interest < 100 ? 
+              `$${interest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
+              `$${Math.max(0, interest).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
             apy: `${roi.toFixed(1)}%`,
             status: interest > 0 ? "Active" : "No Profit",
             statuscolor: interest > 0 ? "success" : "warning"
@@ -630,8 +716,10 @@ const RevenueForcastChart = () => {
   useEffect(() => {
     if (account && isConnected) {
       fetchRealPortfolioData();
+    } else if (!account || !isConnected) {
+      setData(basicTableData);
     }
-  }, [account, isConnected, chainId]);
+  }, [account, isConnected, chainId, protocolBreakdowns]);
 
   // Calculate totals from real data
   const totals = data.reduce((acc, row) => {
