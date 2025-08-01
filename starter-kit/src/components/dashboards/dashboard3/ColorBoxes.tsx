@@ -7,6 +7,7 @@ import { fetchPortfolioData } from "src/services/portfolioService";
 import { useState, useEffect } from "react";
 import WelcomeCard from "./WelcomeCard";
 import RevenueForcastChart from "./RevenueForcastChart";
+import { useCollectInterest } from "src/hooks/useCollectInterest";
 
 const ColorBoxes = () => {
     const { account, chainId } = useWallet();
@@ -25,6 +26,15 @@ const ColorBoxes = () => {
     });
     const [protocolBreakdowns, setProtocolBreakdowns] = useState<any>({});
     const [loading, setLoading] = useState(false);
+
+    // Wagmi hook for collecting interest
+    const {
+        collectInterest,
+        isPending,
+        isConfirming,
+        isConfirmed,
+        error: collectError
+    } = useCollectInterest(selectedProtocol?.name || '');
 
     useEffect(() => {
         if (account && chainId) {
@@ -146,6 +156,34 @@ const ColorBoxes = () => {
         }
     };
 
+    const handleCollectInterest = async (protocol: any) => {
+        if (!protocol || !account) return;
+
+        try {
+            console.log('Collecting interest from:', protocol.name);
+            await collectInterest(account);
+        } catch (error) {
+            console.error('Error collecting interest:', error);
+        }
+    };
+    
+    // Watch for transaction confirmation
+    useEffect(() => {
+        if (isConfirmed) {
+            console.log('Interest collected successfully!');
+            // Refresh portfolio data to show updated balances
+            fetchPortfolioDataFromService();
+        }
+    }, [isConfirmed]);
+    
+    // Handle collection errors
+    useEffect(() => {
+        if (collectError) {
+            console.error('Failed to collect interest:', collectError);
+            alert(`Failed to collect interest: ${collectError.message}`);
+        }
+    }, [collectError]);
+
     const formatUSDValue = (value: number) => {
         if (value >= 1000) {
             return `$${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
@@ -153,8 +191,6 @@ const ColorBoxes = () => {
             return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
     };
-
-
 
     const portfolioCards = [
         {
@@ -367,10 +403,27 @@ const ColorBoxes = () => {
                          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                              <h4 className="text-sm font-medium text-gray-500 mb-2">Current Portfolio Value</h4>
                              <p className="text-2xl font-bold">
-                                 {protocolBreakdown ?
-                                     `$${Math.ceil(protocolBreakdown.supplied + protocolBreakdown.interest).toLocaleString('en-US', { maximumFractionDigits: 0 })}` :
-                                     selectedProtocol?.price
-                                 }
+                                 {protocolBreakdown ? (() => {
+                                     // Round individual values the same way they're displayed
+                                     const roundedSupplied = protocolBreakdown.supplied < 100 ?
+                                         Math.round(protocolBreakdown.supplied * 100) / 100 :
+                                         Math.round(protocolBreakdown.supplied);
+                                     const roundedInterest = protocolBreakdown.interest < 100 ?
+                                         Math.round(protocolBreakdown.interest * 100) / 100 :
+                                         Math.round(protocolBreakdown.interest);
+                                     const total = roundedSupplied + roundedInterest;
+
+                                     console.log(`🧮 Portfolio Value Calculation:`, {
+                                         rawSupplied: protocolBreakdown.supplied,
+                                         rawInterest: protocolBreakdown.interest,
+                                         roundedSupplied,
+                                         roundedInterest,
+                                         total: total,
+                                         ceiling: Math.ceil(total)
+                                     });
+
+                                     return `$${Math.ceil(total).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+                                 })() : selectedProtocol?.price}
                              </p>
                          </div>
 
@@ -435,10 +488,11 @@ const ColorBoxes = () => {
                         {/* Action Buttons */}
                         <div className="flex space-x-3">
                             <Button
-                                onClick={() => window.open(selectedProtocol?.externalLink, '_blank', 'noopener,noreferrer')}
+                                onClick={() => handleCollectInterest(selectedProtocol)}
                                 className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                disabled={isPending || isConfirming}
                             >
-                                Manage Position
+                                {isPending ? 'Preparing...' : isConfirming ? 'Confirming...' : 'Collect Interest'}
                             </Button>
                             <Button
                                 color="gray"

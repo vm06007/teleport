@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+dark/*
+another_app/*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
