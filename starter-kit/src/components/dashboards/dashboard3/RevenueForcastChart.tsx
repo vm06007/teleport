@@ -71,6 +71,13 @@ const protocolsConfig = [
     logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984/logo.png",
     chain: "Ethereum",
     color: "success"
+  },
+  {
+    name: "1inch",
+    icon: "cryptocurrency:1inch",
+    logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x111111111117dC0aa78b770fA6A738034120C302/logo.png",
+    chain: "Ethereum",
+    color: "info"
   }
 ];
 
@@ -458,17 +465,42 @@ const RevenueForcastChart = () => {
             roi: roi.toFixed(1) + '%'
           });
 
-          // Get protocol config for UI elements
-          const protocolConfig = protocolsConfig.find(config =>
-            config.name.toLowerCase() === protocolName.toLowerCase()
-          );
+          // Get protocol config for UI elements (handle version suffixes like V2, V3, V4)
+          const protocolConfig = protocolsConfig.find(config => {
+            const configName = config.name.toLowerCase();
+            const protocolNameLower = protocolName.toLowerCase();
+            
+            // Direct match
+            if (configName === protocolNameLower) return true;
+            
+            // Handle version suffixes (e.g., "Aave V3" matches "Aave")
+            if (protocolNameLower.includes(configName) || configName.includes(protocolNameLower)) {
+              return true;
+            }
+            
+            // Handle specific cases
+            if (protocolNameLower.includes('aave') && configName.includes('aave')) return true;
+            if (protocolNameLower.includes('pendle') && configName.includes('pendle')) return true;
+            if (protocolNameLower.includes('uniswap') && configName.includes('uniswap')) return true;
+            if (protocolNameLower.includes('curve') && configName.includes('curve')) return true;
+            if (protocolNameLower.includes('spark') && configName.includes('spark')) return true;
+            if (protocolNameLower.includes('1inch') && configName.includes('1inch')) return true;
+            
+            return false;
+          });
+
+          if (protocolConfig) {
+            console.log(`✅ ${protocolName} matched to config: ${protocolConfig.name} - Logo: ${protocolConfig.logo}`);
+          } else {
+            console.log(`❌ ${protocolName} - NO MATCH FOUND - Will use placeholder`);
+          }
 
           return {
             logo: protocolConfig?.logo || "https://via.placeholder.com/32",
             protocol: protocolName,
             chain: "Ethereum",
             protocolIcon: protocolConfig?.icon || "solar:chart-bold-duotone",
-            tokens: protocolConfig?.name === "Aave" ? [
+            tokens: (protocolName.toLowerCase().includes('aave') || protocolConfig?.name?.toLowerCase().includes('aave')) ? [
               {
                 id: "1",
                 symbol: "USDC",
@@ -481,7 +513,7 @@ const RevenueForcastChart = () => {
                 color: "secondary",
                 icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png",
               },
-            ] : protocolConfig?.name === "Spark" ? [
+            ] : (protocolName.toLowerCase().includes('spark') || protocolConfig?.name?.toLowerCase().includes('spark')) ? [
               {
                 id: "1",
                 symbol: "DAI",

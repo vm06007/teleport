@@ -29,7 +29,14 @@ const WelcomeCard = ({ totalValue, protocolsValue, walletValue, loading }: Welco
   }
 
   return (
-    <div className="bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg p-6 mb-6 pb-0 pt-0">
+    <div
+      className="bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg p-6 mb-6 pb-0 pt-0"
+      style={{
+        background: 'url(https://ethglobal.b-cdn.net/events/unite/images/xzcwd/default.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+      >
       <div className="flex items-center justify-between">
         {/* Left side - Text content */}
         <div className="flex-1">
