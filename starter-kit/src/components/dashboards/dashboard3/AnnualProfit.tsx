@@ -52,7 +52,6 @@ const ChartData: any = {
   },
 };
 
-
 const AnnualProfit = () => {
   return (
     <>

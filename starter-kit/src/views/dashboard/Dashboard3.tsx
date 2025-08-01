@@ -10,7 +10,7 @@ import CardBox from "src/components/shared/CardBox";
 const Dashboard3 = () => {
     return (
         <>
-        <div className="grid grid-cols-12 gap-30">
+        <div className="grid grid-cols-12 gap-30" style={{ gap: '20px' }}>
           <div className="col-span-12">
             <ColorBoxes />
           </div>
