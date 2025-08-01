@@ -381,9 +381,16 @@ const RevenueForcastChart = () => {
         const targetProtocols = ['pendle', 'aave', 'curve', 'spark', 'uniswap', '1inch', 'oneinch'];
 
         // Filter to only show our target protocols that have positions > $0
+        // Exclude Uniswap V2 specifically
         const relevantProtocols = protocols.filter((protocol: any) => {
           const protocolGroupName = protocol.protocol_group_name?.toLowerCase() || '';
           const protocolGroupId = protocol.protocol_group_id?.toLowerCase() || '';
+
+          // Exclude Uniswap V2 specifically
+          if (protocolGroupName.includes('uniswap v2') || protocolGroupName.includes('uniswap_v2')) {
+            console.log(`🚫 Excluding ${protocol.protocol_group_name} from table`);
+            return false;
+          }
 
           return protocol.value_usd > 0 && targetProtocols.some(target =>
             protocolGroupName.includes(target) || protocolGroupId.includes(target)
@@ -507,14 +514,76 @@ const RevenueForcastChart = () => {
         // Filter out null entries (protocols not found in current API)
         const validData = realData.filter((item: any) => item !== null) as TableTypeRowSelection[];
 
-        console.log('Real protocol data loaded (using current API values):', validData.length, 'protocols with actual positions');
-        console.log('Protocols found (stablecoins pegged to $1.00):');
+        console.log('🔄 Before grouping - Found', validData.length, 'protocol entries');
         validData.forEach((p: any) => {
+          console.log(`  ${p.protocol}: Supplied ${p.supplied}, Interest ${p.claimableInterest}`);
+        });
+
+        // Group by protocol and sum supplied amounts
+        const groupedData = validData.reduce((acc: any, item: any) => {
+          const protocolKey = item.protocol.toLowerCase();
+
+          if (!acc[protocolKey]) {
+            // First entry for this protocol - use protocol card value
+            let protocolCardValue = 0;
+            if (protocolKey.includes('spark')) {
+              protocolCardValue = protocolCardData.sparkValue;
+            } else if (protocolKey.includes('aave')) {
+              protocolCardValue = protocolCardData.aaveValue;
+            } else if (protocolKey.includes('curve')) {
+              protocolCardValue = protocolCardData.curveValue;
+            } else if (protocolKey.includes('uniswap')) {
+              protocolCardValue = protocolCardData.uniswapValue;
+            } else if (protocolKey.includes('pendle')) {
+              protocolCardValue = protocolCardData.pendleValue;
+            } else if (protocolKey.includes('1inch')) {
+              protocolCardValue = protocolCardData.oneInchValue;
+            }
+
+            acc[protocolKey] = {
+              ...item,
+              suppliedAmountRaw: 0, // Track raw number for summing
+              currentValueRaw: protocolCardValue // Use protocol card value
+            };
+          }
+
+          // Sum the supplied amounts (parse back from formatted string)
+          const suppliedAmount = parseFloat(item.supplied.replace(/[$,]/g, ''));
+          acc[protocolKey].suppliedAmountRaw += suppliedAmount;
+
+          return acc;
+        }, {});
+
+        // Convert grouped data back to array and recalculate values
+        const consolidatedData = Object.values(groupedData).map((item: any) => {
+          const currentValue = item.currentValueRaw;
+          const totalSupplied = item.suppliedAmountRaw;
+          const interest = Math.max(0, currentValue - totalSupplied);
+          const roi = totalSupplied > 0 ? (interest / totalSupplied) * 100 : 0;
+
+          console.log(`🎯 ${item.protocol} CONSOLIDATED:`);
+          console.log(`  Protocol Card Value: $${currentValue.toLocaleString()}`);
+          console.log(`  Total Supplied: $${totalSupplied.toLocaleString()}`);
+          console.log(`  Interest: $${interest.toLocaleString()}`);
+
+          return {
+            ...item,
+            supplied: `$${Math.max(0, totalSupplied).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+            currentValue: `$${currentValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+            claimableInterest: `$${Math.max(0, interest).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+            apy: `${roi.toFixed(1)}%`,
+            status: interest > 0 ? "Active" : "No Profit",
+            statuscolor: interest > 0 ? "success" : "warning"
+          };
+        });
+
+        console.log('✅ After consolidation - Final', consolidatedData.length, 'unique protocols');
+        consolidatedData.forEach((p: any) => {
           console.log(`  ${p.protocol}: Supplied ${p.supplied} + Interest ${p.claimableInterest} = Total ${p.currentValue}`);
         });
 
-        // Set the real data directly (no fallback to mock data)
-        setData(validData);
+        // Set the consolidated data
+        setData(consolidatedData);
       }
     } catch (error) {
       console.error("Error fetching protocol snapshot data:", error);
