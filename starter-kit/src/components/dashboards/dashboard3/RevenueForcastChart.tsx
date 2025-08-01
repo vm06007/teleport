@@ -367,20 +367,20 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
     // If we have pre-calculated breakdowns, use them instead of fetching
     if (protocolBreakdowns && Object.keys(protocolBreakdowns).length > 0) {
       console.log("📊 Using pre-calculated protocol breakdowns:", protocolBreakdowns);
-      
+
       const tableData: TableTypeRowSelection[] = [];
-      
+
       // Convert pre-calculated breakdowns to table format
       Object.entries(protocolBreakdowns).forEach(([key, breakdown]: [string, any]) => {
         if (breakdown.supplied > 0 || breakdown.interest > 0) {
           const protocolName = key.charAt(0).toUpperCase() + key.slice(1);
           const displayName = key === 'oneInch' ? '1inch' : protocolName;
-          
-          const config = protocolsConfig.find(p => 
+
+          const config = protocolsConfig.find(p =>
             p.name.toLowerCase().includes(key.toLowerCase()) ||
             (key === 'oneInch' && p.name.toLowerCase().includes('1inch'))
           );
-          
+
           if (config) {
             // Create default tokens based on protocol
             const tokens = key === 'uniswap' ? [
@@ -390,19 +390,19 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
               { id: "1", symbol: "USDS", color: "primary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdc035d45d973e3ec169d2276ddab16f1e407384f/logo.png" },
               { id: "2", symbol: "ETH", color: "secondary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png" }
             ];
-            
+
             tableData.push({
               logo: config.logo,
               protocol: displayName === 'Uniswap' ? 'Uniswap V4' : displayName,
               chain: config.chain,
               protocolIcon: config.icon,
               tokens: tokens,
-              apy: breakdown.supplied > 0 ? 
+              apy: breakdown.supplied > 0 ?
                 `${((breakdown.interest / breakdown.supplied) * 100).toFixed(1)}%` : '0.0%',
-              supplied: breakdown.supplied < 100 ? 
+              supplied: breakdown.supplied < 100 ?
                 `$${breakdown.supplied.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
                 `$${breakdown.supplied.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-              claimableInterest: breakdown.interest < 100 ? 
+              claimableInterest: breakdown.interest < 100 ?
                 `$${breakdown.interest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
                 `$${breakdown.interest.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
               status: breakdown.interest > 0 ? "Active" : "No Profit",
@@ -411,7 +411,7 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
           }
         }
       });
-      
+
       console.log("📊 Generated table data:", tableData);
       setData(tableData);
       setLoading(false);
@@ -496,7 +496,7 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
           const suppliedAmount = (protocol.underlying_tokens || []).reduce((sum: number, token: any) => {
             const tokenSymbol = (token.symbol || '').toLowerCase();
             const isStablecoin = stablecoins.some(stable => tokenSymbol.includes(stable));
-            
+
             if (isStablecoin) {
               // For stablecoins, use 1:1 conversion (amount * 1.0) - same as modal
               const tokenValue = token.amount || 0;
@@ -516,7 +516,7 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
           const claimableInterest = (protocol.reward_tokens || []).reduce((sum: number, token: any) => {
             return sum + (token.value_usd || 0);
           }, 0);
-          
+
           const roi = suppliedAmount > 0 ? (claimableInterest / suppliedAmount) * 100 : 0;
 
           console.log('💰 Reward Tokens Interest Calculation for', protocolName);
@@ -537,15 +537,15 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
           const protocolConfig = protocolsConfig.find(config => {
             const configName = config.name.toLowerCase();
             const protocolNameLower = protocolName.toLowerCase();
-            
+
             // Direct match
             if (configName === protocolNameLower) return true;
-            
+
             // Handle version suffixes (e.g., "Aave V3" matches "Aave")
             if (protocolNameLower.includes(configName) || configName.includes(protocolNameLower)) {
               return true;
             }
-            
+
             // Handle specific cases
             if (protocolNameLower.includes('aave') && configName.includes('aave')) return true;
             if (protocolNameLower.includes('pendle') && configName.includes('pendle')) return true;
@@ -553,7 +553,7 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
             if (protocolNameLower.includes('curve') && configName.includes('curve')) return true;
             if (protocolNameLower.includes('spark') && configName.includes('spark')) return true;
             if (protocolNameLower.includes('1inch') && configName.includes('1inch')) return true;
-            
+
             return false;
           });
 
@@ -651,7 +651,7 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
           // Sum the supplied amounts and claimable interest (parse back from formatted string)
           const suppliedAmount = parseFloat(item.supplied.replace(/[$,]/g, ''));
           const claimableAmount = parseFloat(item.claimableInterest.replace(/[$,]/g, ''));
-          
+
           if (protocolKey.includes('uniswap')) {
             console.log(`🔍 Adding to ${protocolKey}:`, {
               suppliedAmount,
@@ -660,7 +660,7 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
               prevClaimableRaw: acc[protocolKey].claimableInterestRaw
             });
           }
-          
+
           acc[protocolKey].suppliedAmountRaw += suppliedAmount;
           acc[protocolKey].claimableInterestRaw += claimableAmount;
 
@@ -682,11 +682,11 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
 
           return {
             ...item,
-            supplied: totalSupplied < 100 ? 
+            supplied: totalSupplied < 100 ?
               `$${totalSupplied.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
               `$${Math.max(0, totalSupplied).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
             currentValue: `$${currentValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-            claimableInterest: interest < 100 ? 
+            claimableInterest: interest < 100 ?
               `$${interest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
               `$${Math.max(0, interest).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
             apy: `${roi.toFixed(1)}%`,

@@ -12,9 +12,6 @@ const Dashboard3 = () => {
           <div className="col-span-12">
             <ColorBoxes />
           </div>
-          <div className="lg:col-span-8 col-span-12">
-            <RevenueForcastChart />
-          </div>
           <div className="lg:col-span-4 col-span-12">
             <AnnualProfit />
           </div>

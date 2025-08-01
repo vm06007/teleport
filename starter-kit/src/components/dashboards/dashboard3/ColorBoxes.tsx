@@ -166,7 +166,7 @@ const ColorBoxes = () => {
             console.error('Error collecting interest:', error);
         }
     };
-    
+
     // Watch for transaction confirmation
     useEffect(() => {
         if (isConfirmed) {
@@ -175,7 +175,7 @@ const ColorBoxes = () => {
             fetchPortfolioDataFromService();
         }
     }, [isConfirmed]);
-    
+
     // Handle collection errors
     useEffect(() => {
         if (collectError) {
