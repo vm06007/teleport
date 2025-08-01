@@ -57,7 +57,7 @@ const ColorBoxes = () => {
 
     try {
       console.log(`🔍 Fetching breakdown for ${protocolTitle}...`);
-      
+
       // Get snapshot data for supplied amounts (same as interest table)
       const snapshotResponse = await fetch(`http://localhost:5003/proxy?url=https://api.1inch.dev/portfolio/portfolio/v5.0/protocols/snapshot?addresses=${account}&chain_id=${chainId}`);
       const snapshotData = await snapshotResponse.json();
@@ -65,12 +65,12 @@ const ColorBoxes = () => {
       if (!snapshotData.result) return null;
 
       const protocols = snapshotData.result || [];
-      
+
       // Find protocols matching the selected protocol (handle version suffixes)
       const matchingProtocols = protocols.filter((protocol: any) => {
         const protocolName = protocol.protocol_group_name?.toLowerCase() || '';
         const titleLower = protocolTitle.toLowerCase();
-        
+
         return protocolName.includes(titleLower) || titleLower.includes(protocolName) ||
                (titleLower.includes('aave') && protocolName.includes('aave')) ||
                (titleLower.includes('pendle') && protocolName.includes('pendle')) ||
@@ -93,7 +93,7 @@ const ColorBoxes = () => {
 
       // Calculate total supplied amount (same logic as interest table)
       const stablecoins = ['usds', 'usdc', 'usdt', 'dai', 'busd', 'frax', 'usdp', 'tusd', 'usdn'];
-      
+
       let totalSupplied = 0;
 
       matchingProtocols.forEach((protocol: any) => {
@@ -198,7 +198,7 @@ const ColorBoxes = () => {
       price: loading ? "..." : formatUSDValue(portfolioData.sparkValue),
       value: portfolioData.sparkValue,
       link: "#",
-      externalLink: "https://app.spark.fi/",
+      externalLink: "https://app.spark.fi/spk/farm"
     },
     {
       bg: "success-gradient",
@@ -209,7 +209,7 @@ const ColorBoxes = () => {
       price: loading ? "..." : formatUSDValue(portfolioData.uniswapValue),
       value: portfolioData.uniswapValue,
       link: "#",
-      externalLink: "https://app.uniswap.org/",
+      externalLink: "https://app.uniswap.org/positions",
     },
     {
       bg: "secondary-gradient",
@@ -242,9 +242,9 @@ const ColorBoxes = () => {
               <div className="w-full" key={index}>
                   <div
                     className={`text-center px-5 py-30 rounded-tw ${item.bg}`}
-                    style={{ 
-                      filter: item.value === 0 ? 'grayscale(0.7)' : 'none',
-                      opacity: item.value === 0 ? 0.7 : 1
+                    style={{
+                      filter: item.value === 0 ? 'grayscale(1)' : 'none',
+                      opacity: item.value === 0 ? 1 : 1
                     }}
                   >
                     <span
@@ -320,20 +320,32 @@ const ColorBoxes = () => {
            }}
            size="lg"
          >
-           <Modal.Header>
-             <div className="flex items-center space-x-3">
-               <img
-                 src={selectedProtocol?.logo}
-                 alt={`${selectedProtocol?.title} logo`}
-                 className="h-8 w-8 object-contain"
-                 style={{ borderRadius: '20px' }}
-               />
-               <div>
-                 <h3 className="text-lg font-semibold">{selectedProtocol?.title} Protocol</h3>
-                 <p className="text-sm text-gray-500">Ethereum Network</p>
-               </div>
-             </div>
-           </Modal.Header>
+          <Modal.Header>
+            <div className="flex items-center space-x-3">
+              <img
+                src={selectedProtocol?.logo}
+                alt={`${selectedProtocol?.title} logo`}
+                className="h-8 w-8 object-contain"
+                style={{ borderRadius: '20px' }}
+              />
+              <div>
+                <h3 className="text-lg font-semibold">{selectedProtocol?.title} Protocol</h3>
+                <p className="text-sm text-gray-500">Ethereum Network</p>
+              </div>
+            </div>
+            {/* External Link Button positioned next to close button */}
+            <button
+              onClick={() => window.open(selectedProtocol?.externalLink, '_blank', 'noopener,noreferrer')}
+              className="absolute top-[24px] right-[56px] w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-blue-100 dark:bg-gray-700 dark:hover:bg-blue-600 transition-all duration-200 group hover:scale-110 mt-[7px] mr-[7px]"
+              title={`Open ${selectedProtocol?.title} dashboard`}
+            >
+              <Icon
+                icon="material-symbols:open-in-new"
+                height={16}
+                className="text-gray-600 group-hover:text-blue-600 dark:text-gray-400 dark:group-hover:text-blue-300 transition-colors"
+              />
+            </button>
+          </Modal.Header>
            <Modal.Body>
              <div className="space-y-6">
                {/* Current Portfolio Value */}
@@ -352,7 +364,7 @@ const ColorBoxes = () => {
                      </p>
                      <p className="text-xs text-gray-500">Lending + farming positions</p>
                    </div>
-                   
+
                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                      <h5 className="text-sm font-medium text-green-600 dark:text-green-400 mb-1">Interest Earned</h5>
                      <p className="text-lg font-semibold">
@@ -372,11 +384,11 @@ const ColorBoxes = () => {
                {protocolBreakdown && selectedProtocol && (
                  (() => {
                    const protocolTitle = selectedProtocol.title.toLowerCase();
-                   const showBorrowedSection = protocolTitle.includes('spark') || 
-                                             protocolTitle.includes('aave') || 
-                                             protocolTitle.includes('pendle') || 
+                   const showBorrowedSection = protocolTitle.includes('spark') ||
+                                             protocolTitle.includes('aave') ||
+                                             protocolTitle.includes('pendle') ||
                                              protocolTitle.includes('1inch');
-                   
+
                    return showBorrowedSection ? (
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                        <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
@@ -386,7 +398,7 @@ const ColorBoxes = () => {
                          </p>
                          <p className="text-xs text-gray-500">Total borrowed amount</p>
                        </div>
-                       
+
                        <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
                          <h5 className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-1">Debt Interest</h5>
                          <p className="text-lg font-semibold">
