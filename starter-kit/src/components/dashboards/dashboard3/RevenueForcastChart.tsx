@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-table";
 import { Badge } from "flowbite-react";
 import { useMemo } from "react";
+import { getTokenMetadata } from "../../../utils/tokenMappings";
 
 export interface TableTypeRowSelection {
     logo?: string;
@@ -85,18 +86,59 @@ const protocolsConfig = [
     }
 ];
 
-// Default token configurations for different protocols
-const getDefaultTokens = (protocolKey: string) => {
+// Helper function to deduplicate tokens by symbol
+const deduplicateTokens = (tokens: any[]) => {
+    return tokens.reduce((acc: any[], token: any) => {
+        const existingToken = acc.find(t => t.symbol.toLowerCase() === token.symbol.toLowerCase());
+        if (!existingToken) {
+            acc.push(token);
+        }
+        return acc;
+    }, []);
+};
+
+// Get tokens with proper metadata and icons
+const getTokensForProtocol = (protocolKey: string) => {
+    const createToken = (symbol: string, id: string, color: string = "primary") => {
+        const metadata = getTokenMetadata(symbol);
+        return {
+            id,
+            symbol,
+            color,
+            icon: metadata.icon || `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x${symbol.toLowerCase()}/logo.png`
+        };
+    };
+
     switch (protocolKey.toLowerCase()) {
         case 'uniswap':
             return [
-                { id: "1", symbol: "ETH", color: "secondary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png" },
-                { id: "2", symbol: "WISE", color: "primary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x66a0f676479cee1d7373f3dc2e2952778bff5bd6/logo.png" }
+                createToken("WETH", "1", "secondary"),
+                createToken("DAI", "2", "primary")
+            ];
+        case 'spark':
+            return [
+                createToken("USDS", "1", "primary"),
+                createToken("ETH", "2", "secondary")
+            ];
+        case 'aave':
+            return [
+                createToken("USDC", "1", "primary"),
+                createToken("DAI", "2", "success")
+            ];
+        case 'curve':
+            return [
+                createToken("USDT", "1", "primary"),
+                createToken("USDC", "2", "primary")
+            ];
+        case 'oneinch':
+            return [
+                createToken("USDC", "1", "primary"),
+                createToken("ETH", "2", "secondary")
             ];
         default:
             return [
-                { id: "1", symbol: "USDS", color: "primary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdc035d45d973e3ec169d2276ddab16f1e407384f/logo.png" },
-                { id: "2", symbol: "ETH", color: "secondary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png" }
+                createToken("USDS", "1", "primary"),
+                createToken("ETH", "2", "secondary")
             ];
     }
 };
@@ -121,14 +163,43 @@ const transformProtocolData = (
             );
 
             if (config) {
+                // Use actual token data from breakdown if available, otherwise use default tokens
+                let protocolTokens;
+                if (breakdown.tokens && breakdown.tokens.length > 0) {
+                    // Deduplicate tokens based on symbol
+                    const uniqueTokens = deduplicateTokens(breakdown.tokens);
+
+                    protocolTokens = uniqueTokens.map((token: any, index: number) => ({
+                        id: (index + 1).toString(),
+                        symbol: token.symbol,
+                        color: token.isStablecoin ? "primary" : "secondary",
+                        icon: token.icon || getTokenMetadata(token.symbol).icon || ''
+                    }));
+                } else {
+                    protocolTokens = getTokensForProtocol(key);
+                }
+
+                // Apply deduplication to the final result as well
+                protocolTokens = deduplicateTokens(protocolTokens);
+
                 tableData.push({
                     logo: config.logo,
                     protocol: displayName === 'Uniswap' ? 'Uniswap V4' : displayName,
                     chain: config.chain,
                     protocolIcon: config.icon,
-                    tokens: getDefaultTokens(key),
-                    apy: breakdown.supplied > 0 ?
-                        `${((breakdown.interest / breakdown.supplied) * 100).toFixed(1)}%` : '0.0%',
+                    tokens: protocolTokens,
+                    apy: (() => {
+                        // Use specific APY values for certain protocols
+                        switch (key.toLowerCase()) {
+                            case 'spark':
+                                return '7.5%';
+                            case 'uniswap':
+                                return '4.3%';
+                            default:
+                                return breakdown.supplied > 0 ?
+                                    `${((breakdown.interest / breakdown.supplied) * 100).toFixed(1)}%` : '0.0%';
+                        }
+                    })(),
                     supplied: breakdown.supplied < 100 ?
                         `$${breakdown.supplied.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
                         `$${breakdown.supplied.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
@@ -317,9 +388,10 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
 
     return (
         <>
+            <br></br>
             <CardBox>
-                <div className="flex justify-between items-center mb-4">
-                    <h5 className="text-xl font-semibold">Revenue Forecast</h5>
+                <div className="flex justify-between items-center mb-4 mt-4">
+                    <h5 className="text-xl font-semibold">Revenue Breakdown</h5>
                     <div className="flex items-center gap-2">
                         <Icon icon="solar:chart-2-bold-duotone" className="text-primary" height={20} />
                         <span className="text-sm text-gray-500">{data.length} Protocols</span>
