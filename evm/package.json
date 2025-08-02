@@ -1,0 +1,17 @@
+{
+  "name": "teleport-evm",
+  "version": "1.0.0",
+  "description": "DeFi Portfolio Manager smart contracts",
+  "private": true,
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.1.0",
+    "@uniswap/v4-core": "latest",
+    "@uniswap/v4-periphery": "latest"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "install-forge": "forge install"
+  }
+}

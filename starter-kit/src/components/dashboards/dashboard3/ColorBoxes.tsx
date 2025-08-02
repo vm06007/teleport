@@ -61,7 +61,7 @@ const ColorBoxes = () => {
             const protocols = snapshotResponse.result || [];
             const stablecoins = ['usds', 'usdc', 'usdt', 'dai', 'busd', 'frax', 'usdp', 'tusd', 'usdn'];
 
-                        // Helper function to calculate protocol breakdown
+            // Helper function to calculate protocol breakdown
             const calculateProtocolBreakdown = (protocolNames: string[]) => {
                 console.log(`🔍 Calculating breakdown for protocols:`, protocolNames);
 
@@ -141,7 +141,7 @@ const ColorBoxes = () => {
                 oneInchValue: breakdowns.oneInch.total,
                 pendleValue: breakdowns.pendle.total,
                 protocolsValue: breakdowns.aave.total + breakdowns.spark.total + breakdowns.uniswap.total +
-                               breakdowns.curve.total + breakdowns.oneInch.total + breakdowns.pendle.total
+                    breakdowns.curve.total + breakdowns.oneInch.total + breakdowns.pendle.total
             };
 
             updatedPortfolioData.totalValue = updatedPortfolioData.protocolsValue + updatedPortfolioData.walletValue;
@@ -316,32 +316,32 @@ const ColorBoxes = () => {
                                     </p>
                                     <h4 className="text-22">{item.price}</h4>
                                     <div className="flex items-center justify-center gap-2 mt-5">
-                                                                <Button
-                            onClick={() => {
-                                setSelectedProtocol(item);
-                                // Use pre-calculated breakdown data
-                                const protocolKey = item.title.toLowerCase();
-                                const breakdown = protocolBreakdowns[protocolKey === '1inch' ? 'oneInch' : protocolKey];
+                                        <Button
+                                            onClick={() => {
+                                                setSelectedProtocol(item);
+                                                // Use pre-calculated breakdown data
+                                                const protocolKey = item.title.toLowerCase();
+                                                const breakdown = protocolBreakdowns[protocolKey === '1inch' ? 'oneInch' : protocolKey];
 
-                                console.log("🔍 Opening modal for:", item.title);
-                                console.log("🔍 Protocol key:", protocolKey);
-                                console.log("🔍 Available breakdowns:", Object.keys(protocolBreakdowns));
-                                console.log("🔍 Selected breakdown:", breakdown);
+                                                console.log("🔍 Opening modal for:", item.title);
+                                                console.log("🔍 Protocol key:", protocolKey);
+                                                console.log("🔍 Available breakdowns:", Object.keys(protocolBreakdowns));
+                                                console.log("🔍 Selected breakdown:", breakdown);
 
-                                // Safety check - provide default if breakdown is undefined
-                                setProtocolBreakdown(breakdown || {
-                                    supplied: 0,
-                                    interest: 0,
-                                    total: 0,
-                                    borrowed: 0,
-                                    debt: 0
-                                });
-                            }}
-                            className="bg-white hover:bg-dark text-ld font-semibold hover:text-white shadow-sm py-1 px-2 dark:bg-darkgray dark:hover:bg-dark"
-                            size="xs"
-                        >
-                            Details
-                        </Button>
+                                                // Safety check - provide default if breakdown is undefined
+                                                setProtocolBreakdown(breakdown || {
+                                                    supplied: 0,
+                                                    interest: 0,
+                                                    total: 0,
+                                                    borrowed: 0,
+                                                    debt: 0
+                                                });
+                                            }}
+                                            className="bg-white hover:bg-dark text-ld font-semibold hover:text-white shadow-sm py-1 px-2 dark:bg-darkgray dark:hover:bg-dark"
+                                            size="xs"
+                                        >
+                                            Details
+                                        </Button>
                                         <Button
                                             onClick={() => window.open(item.externalLink, '_blank', 'noopener,noreferrer')}
                                             className="bg-white hover:bg-dark shadow-sm p-1 dark:bg-darkgray dark:hover:bg-dark group"
@@ -399,35 +399,35 @@ const ColorBoxes = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <div className="space-y-6">
-                                                                          {/* Current Portfolio Value */}
-                         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                             <h4 className="text-sm font-medium text-gray-500 mb-2">Current Portfolio Value</h4>
-                             <p className="text-2xl font-bold">
-                                 {protocolBreakdown ? (() => {
-                                     // Round individual values the same way they're displayed
-                                     const roundedSupplied = protocolBreakdown.supplied < 100 ?
-                                         Math.round(protocolBreakdown.supplied * 100) / 100 :
-                                         Math.round(protocolBreakdown.supplied);
-                                     const roundedInterest = protocolBreakdown.interest < 100 ?
-                                         Math.round(protocolBreakdown.interest * 100) / 100 :
-                                         Math.round(protocolBreakdown.interest);
-                                     const total = roundedSupplied + roundedInterest;
+                        {/* Current Portfolio Value */}
+                        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                            <h4 className="text-sm font-medium text-gray-500 mb-2">Current Portfolio Value</h4>
+                            <p className="text-2xl font-bold">
+                                {protocolBreakdown ? (() => {
+                                    // Round individual values the same way they're displayed
+                                    const roundedSupplied = protocolBreakdown.supplied < 100 ?
+                                        Math.round(protocolBreakdown.supplied * 100) / 100 :
+                                        Math.round(protocolBreakdown.supplied);
+                                    const roundedInterest = protocolBreakdown.interest < 100 ?
+                                        Math.round(protocolBreakdown.interest * 100) / 100 :
+                                        Math.round(protocolBreakdown.interest);
+                                    const total = roundedSupplied + roundedInterest;
 
-                                     console.log(`🧮 Portfolio Value Calculation:`, {
-                                         rawSupplied: protocolBreakdown.supplied,
-                                         rawInterest: protocolBreakdown.interest,
-                                         roundedSupplied,
-                                         roundedInterest,
-                                         total: total,
-                                         ceiling: Math.ceil(total)
-                                     });
+                                    console.log(`🧮 Portfolio Value Calculation:`, {
+                                        rawSupplied: protocolBreakdown.supplied,
+                                        rawInterest: protocolBreakdown.interest,
+                                        roundedSupplied,
+                                        roundedInterest,
+                                        total: total,
+                                        ceiling: Math.ceil(total)
+                                    });
 
-                                     return `$${Math.ceil(total).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-                                 })() : selectedProtocol?.price}
-                             </p>
-                         </div>
+                                    return `$${Math.ceil(total).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+                                })() : selectedProtocol?.price}
+                            </p>
+                        </div>
 
-                                                {/* Portfolio Breakdown - Pre-calculated Data */}
+                        {/* Portfolio Breakdown - Pre-calculated Data */}
                         {protocolBreakdown && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">

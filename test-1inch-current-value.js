@@ -12,7 +12,7 @@ async function test1inchCurrentValue() {
   try {
     // Test the current_value endpoint with different parameters
     console.log('\n=== Testing current_value endpoint ===');
-    
+
     const response = await axios.get(PROXY_URL, {
       params: {
         url: `https://api.1inch.dev/portfolio/portfolio/v5.0/general/current_value?addresses=${TEST_ADDRESS}&chain_id=${CHAIN_ID}&use_cache=true`
@@ -27,10 +27,10 @@ async function test1inchCurrentValue() {
     const data = response.data;
     if (data.result) {
       console.log('\n=== Response Analysis ===');
-      
+
       // Check total value
       console.log('Total Value:', data.result.total);
-      
+
       // Check by_address breakdown
       if (data.result.by_address && data.result.by_address.length > 0) {
         console.log('\nBy Address:');
@@ -38,7 +38,7 @@ async function test1inchCurrentValue() {
           console.log(`  ${addr.address}: $${addr.value_usd}`);
         });
       }
-      
+
       // Check by_category breakdown
       if (data.result.by_category && data.result.by_category.length > 0) {
         console.log('\nBy Category:');
@@ -46,7 +46,7 @@ async function test1inchCurrentValue() {
           console.log(`  ${cat.category_name} (${cat.category_id}): $${cat.value_usd}`);
         });
       }
-      
+
       // Check by_protocol_group breakdown
       if (data.result.by_protocol_group && data.result.by_protocol_group.length > 0) {
         console.log('\nBy Protocol Group:');
@@ -54,7 +54,7 @@ async function test1inchCurrentValue() {
           console.log(`  ${protocol.protocol_group_name} (${protocol.protocol_group_id}): $${protocol.value_usd}`);
         });
       }
-      
+
       // Check by_chain breakdown
       if (data.result.by_chain && data.result.by_chain.length > 0) {
         console.log('\nBy Chain:');
@@ -62,7 +62,7 @@ async function test1inchCurrentValue() {
           console.log(`  ${chain.chain_name} (${chain.chain_id}): $${chain.value_usd}`);
         });
       }
-      
+
       // Check meta information
       if (data.meta) {
         console.log('\nMeta Information:');
@@ -99,4 +99,4 @@ async function test1inchCurrentValue() {
   }
 }
 
-test1inchCurrentValue(); 
+test1inchCurrentValue();

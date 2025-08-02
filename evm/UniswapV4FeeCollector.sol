@@ -1,50 +1,25 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: -- ETH --
 pragma solidity ^0.8.24;
 
-import {IPositionManager} from "v4-periphery/src/interfaces/IPositionManager.sol";
-import {Actions} from "v4-periphery/src/libraries/Actions.sol";
-import {Currency, CurrencyLibrary} from "v4-core/src/types/Currency.sol";
+import {IPositionManager} from "@uniswap/v4-periphery/src/interfaces/IPositionManager.sol";
+import {Actions} from "@uniswap/v4-periphery/src/libraries/Actions.sol";
+import {Currency, CurrencyLibrary} from "@uniswap/v4-core/src/types/Currency.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/**
- * @title UniswapV4FeeCollector
- * @author Gemini
- * @notice A smart contract to manage Uniswap V4 positions in bulk (collect fees, close positions).
- * @dev This contract leverages the batching capabilities of the Uniswap V4 PositionManager
- * to execute multiple actions atomically, saving significant gas costs.
- * To use this, the owner of a position NFT must first grant approval for this contract
- * to manage their position.
- */
 contract UniswapV4FeeCollector is Ownable, IERC721Receiver {
     using CurrencyLibrary for Currency;
 
     /// @notice The immutable address of the Uniswap V4 Position Manager.
     IPositionManager public immutable positionManager;
 
-    /**
-     * @dev A struct to define the parameters for collecting fees from a single position.
-     * @param tokenId The ID of the position NFT.
-     * @param recipient The address that will receive the collected fees.
-     * @param token0 The address of the first token in the pool pair.
-     * @param token1 The address of the second token in the pool pair.
-     */
     struct CollectParams {
         uint256 tokenId;
         address recipient;
         address token0;
         address token1;
     }
-
-    /**
-     * @dev A struct to define the parameters for closing a single position.
-     * @param tokenId The ID of the position NFT.
-     * @param recipient The address that will receive the withdrawn tokens.
-     * @param token0 The address of the first token in the pool pair.
-     * @param token1 The address of the second token in the pool pair.
-     * @param liquidity The exact amount of liquidity to withdraw from the position.
-     */
     struct CloseParams {
         uint256 tokenId;
         address recipient;
