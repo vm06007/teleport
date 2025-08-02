@@ -283,7 +283,7 @@ const ColorBoxes = () => {
             // This would involve calling the PositionManager's burn or withdraw functions
             // For now, just log the operation
             console.log('Withdraw liquidity functionality will be implemented in production');
-            
+
             // Set operation type for UI feedback
             // This would be part of an actual withdrawal hook call in production
         } catch (error) {
@@ -326,35 +326,18 @@ const ColorBoxes = () => {
         if (selectedProtocol) {
             // Store current scroll position
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            
+
             // Disable body scroll with multiple methods for better browser support
-            document.body.classList.add('modal-open');
-            document.documentElement.classList.add('modal-open');
-            document.body.style.overflow = 'hidden';
-            document.body.style.position = 'fixed';
-            document.body.style.top = `-${scrollTop}px`;
-            document.body.style.left = '0';
-            document.body.style.right = '0';
-            document.body.style.width = '100%';
-            document.documentElement.style.overflow = 'hidden';
-            
+
+
             // Store scroll position for restoration
             document.body.setAttribute('data-scroll-top', scrollTop.toString());
         } else {
             // Get stored scroll position
             const scrollTop = parseInt(document.body.getAttribute('data-scroll-top') || '0');
-            
-            // Re-enable body scroll
-            document.body.classList.remove('modal-open');
-            document.documentElement.classList.remove('modal-open');
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.left = '';
-            document.body.style.right = '';
-            document.body.style.width = '';
-            document.documentElement.style.overflow = '';
-            
+
+
+
             // Restore scroll position
             window.scrollTo(0, scrollTop);
             document.body.removeAttribute('data-scroll-top');
@@ -395,13 +378,13 @@ const ColorBoxes = () => {
                     '#protocol-modal ~ div',
                     'div[style*="z-index"]'
                 ];
-                
+
                 selectors.forEach(selector => {
                     const elements = document.querySelectorAll(selector);
                     elements.forEach(element => {
                         const htmlElement = element as HTMLElement;
                         // Only apply to elements that look like modal backdrops
-                        if (htmlElement.classList.contains('fixed') || 
+                        if (htmlElement.classList.contains('fixed') ||
                             htmlElement.hasAttribute('data-modal-backdrop') ||
                             htmlElement.style.zIndex) {
                             htmlElement.style.backdropFilter = 'blur(3px)';
@@ -789,11 +772,18 @@ const ColorBoxes = () => {
                                 {!loadingPositions && uniswapPositions.length > 0 && (
                                     <div className="space-y-2 max-h-64 overflow-y-auto">
                                         {uniswapPositions.map((position) => (
-                                            <div key={position.tokenId} className="flex items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                            <div
+                                                key={position.tokenId}
+                                                className="flex items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200"
+                                                onClick={() => handlePositionSelection(position.tokenId, !selectedPositions.has(position.tokenId))}
+                                            >
                                                 <input
                                                     type="checkbox"
                                                     checked={selectedPositions.has(position.tokenId)}
-                                                    onChange={(e) => handlePositionSelection(position.tokenId, e.target.checked)}
+                                                    onChange={(e) => {
+                                                        e.stopPropagation(); // Prevent double-toggle when clicking checkbox directly
+                                                        handlePositionSelection(position.tokenId, e.target.checked);
+                                                    }}
                                                     className="h-4 w-4 text-blue-600 rounded mr-3"
                                                 />
                                                 <div className="flex-1">
