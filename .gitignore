@@ -25,3 +25,5 @@ another_app/*
 *.njsproj
 *.sln
 *.sw?
+evm/broadcast/DeploySparkFarmManager.s.sol/1/run-latest.json
+evm/broadcast/DeploySparkFarmManager.s.sol/1/run-1754098874.json
