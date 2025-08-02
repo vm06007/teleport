@@ -6,8 +6,8 @@ import {
     getCoreRowModel,
     flexRender,
 } from "@tanstack/react-table";
-import { Badge } from "flowbite-react";
-import { useMemo } from "react";
+import { Badge, Button } from "flowbite-react";
+import { useMemo, useState } from "react";
 import { getTokenMetadata } from "../../../utils/tokenMappings";
 
 export interface TableTypeRowSelection {
@@ -347,6 +347,9 @@ const columns = [
 ];
 
 const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) => {
+    // Selection state for checkboxes
+    const [rowSelection, setRowSelection] = useState<{[key: string]: boolean}>({});
+
     // Transform the prop data into table format
     const data = useMemo(() => transformProtocolData(protocolBreakdowns), [protocolBreakdowns]);
 
@@ -369,11 +372,49 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
             : '0.0';
     }, [data]);
 
+    // Calculate selected claimable total
+    const selectedClaimableTotal = useMemo(() => {
+        const selectedRows = Object.keys(rowSelection).filter(key => rowSelection[key]);
+        return selectedRows.reduce((total, rowIndex) => {
+            const row = data[parseInt(rowIndex)];
+            if (row) {
+                const claimable = parseFloat(row.claimableInterest?.replace(/[$,]/g, '') || '0');
+                return total + claimable;
+            }
+            return total;
+        }, 0);
+    }, [rowSelection, data]);
+
+    // Calculate selected supplied total
+    const selectedSuppliedTotal = useMemo(() => {
+        const selectedRows = Object.keys(rowSelection).filter(key => rowSelection[key]);
+        return selectedRows.reduce((total, rowIndex) => {
+            const row = data[parseInt(rowIndex)];
+            if (row) {
+                const supplied = parseFloat(row.supplied?.replace(/[$,]/g, '') || '0');
+                return total + supplied;
+            }
+            return total;
+        }, 0);
+    }, [rowSelection, data]);
+
+    // Handle row click to toggle selection
+    const handleRowClick = (rowIndex: number) => {
+        setRowSelection(prev => ({
+            ...prev,
+            [rowIndex]: !prev[rowIndex]
+        }));
+    };
+
     const table = useReactTable({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
         enableRowSelection: true,
+        state: {
+            rowSelection,
+        },
+        onRowSelectionChange: setRowSelection,
     });
 
     // Show empty state if no data
@@ -417,9 +458,22 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
                         </thead>
                         <tbody>
                             {table.getRowModel().rows.map((row) => (
-                                <tr key={row.id} className="border-t border-gray-100 dark:border-gray-700">
+                                <tr
+                                    key={row.id}
+                                    className="border-t border-gray-100 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors duration-200"
+                                    onClick={() => handleRowClick(row.index)}
+                                >
                                     {row.getVisibleCells().map((cell) => (
-                                        <td key={cell.id} className="py-3 px-2">
+                                        <td
+                                            key={cell.id}
+                                            className="py-3 px-2"
+                                            onClick={(e) => {
+                                                // Don't propagate if clicking on the checkbox itself
+                                                if (cell.column.id === 'select') {
+                                                    e.stopPropagation();
+                                                }
+                                            }}
+                                        >
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </td>
                                     ))}
@@ -427,10 +481,11 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
                             ))}
                         </tbody>
                     </table>
-                </div>
+                                </div>
 
                 <div className="flex md:flex-row flex-col gap-3 mt-6">
-                    <div className="md:basis-1/3 basis-full">
+                    {/* Total Supplied */}
+                    <div className="md:basis-1/4 basis-full">
                         <div className="flex gap-3 items-center">
                             <span className="h-12 w-12 flex-shrink-0 flex items-center justify-center bg-muted dark:bg-dark rounded-tw">
                                 <Icon
@@ -445,7 +500,9 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
                             </div>
                         </div>
                     </div>
-                    <div className="md:basis-1/3 basis-full">
+
+                    {/* Claimable Interest */}
+                    <div className="md:basis-1/4 basis-full">
                         <div className="flex gap-3 items-center">
                             <span className="h-12 w-12 flex-shrink-0 flex items-center justify-center bg-lightprimary rounded-tw">
                                 <Icon
@@ -460,11 +517,13 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
                             </div>
                         </div>
                     </div>
-                    <div className="md:basis-1/3 basis-full">
+
+                    {/* Avg APY */}
+                    <div className="md:basis-1/4 basis-full">
                         <div className="flex gap-3 items-center">
                             <span className="h-12 w-12 flex-shrink-0 flex items-center justify-center bg-lightsuccess rounded-tw">
                                 <Icon
-                                    icon="solar:percentage-circle-linear"
+                                    icon="solar:chart-2-bold"
                                     className="text-success"
                                     height={24}
                                 />
@@ -473,6 +532,38 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
                                 <p>Avg APY</p>
                                 <h5 className="font-medium text-lg">{avgAPY}%</h5>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="md:basis-1/4 basis-full">
+                        <div className="flex flex-row gap-2 h-full justify-center items-center">
+                            <Button
+                                disabled={Object.keys(rowSelection).length === 0 || selectedClaimableTotal === 0}
+                                className={`${Object.keys(rowSelection).length === 0 || selectedClaimableTotal === 0
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                                } text-white font-medium px-3 py-2 text-sm w-[180px] whitespace-nowrap`}
+                                onClick={() => {
+                                    console.log('Claiming:', selectedClaimableTotal);
+                                    // TODO: Implement claim functionality
+                                }}
+                            >
+                                Claim ${selectedClaimableTotal.toFixed(2)}
+                            </Button>
+                            <Button
+                                disabled={Object.keys(rowSelection).length === 0 || selectedSuppliedTotal === 0}
+                                className={`${Object.keys(rowSelection).length === 0 || selectedSuppliedTotal === 0
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-red-600 hover:bg-red-700'
+                                } text-white font-medium px-3 py-2 text-sm w-[180px] whitespace-nowrap`}
+                                onClick={() => {
+                                    console.log('Withdrawing:', selectedSuppliedTotal);
+                                    // TODO: Implement withdraw functionality
+                                }}
+                            >
+                                Withdraw ${selectedSuppliedTotal.toFixed(2)}
+                            </Button>
                         </div>
                     </div>
                 </div>
