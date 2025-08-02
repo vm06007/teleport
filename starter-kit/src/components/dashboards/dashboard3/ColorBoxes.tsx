@@ -34,6 +34,9 @@ const ColorBoxes = () => {
     const [selectedPositions, setSelectedPositions] = useState<Set<string>>(new Set());
     const [loadingPositions, setLoadingPositions] = useState(false);
 
+    // Token breakdown toggle state
+    const [showTokenBreakdown, setShowTokenBreakdown] = useState(false);
+
     // Wagmi hook for collecting interest and exiting positions
     const {
         collectInterest,
@@ -125,7 +128,7 @@ const ColorBoxes = () => {
                         const tokenSymbol = (token.symbol || '').toLowerCase();
                         const isStablecoin = stablecoins.some(stable => tokenSymbol.includes(stable));
                         const metadata = getTokenMetadata(token.symbol || '');
-                        
+
                         if (token.amount > 0 || token.value_usd > 0) {
                             tokens.push({
                                 symbol: token.symbol || '',
@@ -288,6 +291,7 @@ const ColorBoxes = () => {
             if (event.key === 'Escape' && selectedProtocol) {
                 setSelectedProtocol(null);
                 setProtocolBreakdown(null);
+                setShowTokenBreakdown(false); // Reset token breakdown to collapsed
             }
         };
 
@@ -486,6 +490,7 @@ const ColorBoxes = () => {
                 onClose={() => {
                     setSelectedProtocol(null);
                     setProtocolBreakdown(null);
+                    setShowTokenBreakdown(false); // Reset token breakdown to collapsed
                 }}
                 size="lg"
             >
@@ -517,9 +522,94 @@ const ColorBoxes = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <div className="space-y-6">
-                        {/* Uniswap Positions */}
+                        {/* Current Portfolio Value - Always show first */}
+                        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-sm font-medium text-gray-500">Current Portfolio Value</h4>
+                                {protocolBreakdown && protocolBreakdown.tokens && protocolBreakdown.tokens.length > 0 && (
+                                    <button
+                                        onClick={() => setShowTokenBreakdown(!showTokenBreakdown)}
+                                        className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                    >
+                                        <Icon
+                                            icon={showTokenBreakdown ? "mdi:chevron-up" : "mdi:chevron-down"}
+                                            className="text-sm"
+                                        />
+                                        <span>{showTokenBreakdown ? 'Hide' : 'Show'} Breakdown</span>
+                                    </button>
+                                )}
+                            </div>
+                            <p className="text-2xl font-bold">
+                                {protocolBreakdown ? (() => {
+                                    // Round individual values the same way they're displayed
+                                    const roundedSupplied = protocolBreakdown.supplied < 100 ?
+                                        Math.round(protocolBreakdown.supplied * 100) / 100 :
+                                        Math.round(protocolBreakdown.supplied);
+                                    const roundedInterest = protocolBreakdown.interest < 100 ?
+                                        Math.round(protocolBreakdown.interest * 100) / 100 :
+                                        Math.round(protocolBreakdown.interest);
+                                    const total = roundedSupplied + roundedInterest;
 
-                        {/* Portfolio Breakdown - Pre-calculated Data */}
+                                    console.log(`🧮 Portfolio Value Calculation:`, {
+                                        rawSupplied: protocolBreakdown.supplied,
+                                        rawInterest: protocolBreakdown.interest,
+                                        roundedSupplied,
+                                        roundedInterest,
+                                        total: total,
+                                        ceiling: Math.ceil(total)
+                                    });
+
+                                    return `$${Math.ceil(total).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+                                })() : selectedProtocol?.price}
+                            </p>
+                        </div>
+
+                        {/* Token Breakdown - Collapsible */}
+                        {showTokenBreakdown && protocolBreakdown && protocolBreakdown.tokens && protocolBreakdown.tokens.length > 0 && (
+                            <div className="space-y-3">
+                                {protocolBreakdown.tokens.map((token: any, index: number) => (
+                                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                        <div className="flex items-center space-x-3">
+                                            {token.icon ? (
+                                                <img
+                                                    src={token.icon}
+                                                    alt={token.symbol}
+                                                    className="w-8 h-8 rounded-full"
+                                                    onError={(e) => {
+                                                        e.currentTarget.style.display = 'none';
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
+                                                    {token.symbol.charAt(0)}
+                                                </div>
+                                            )}
+                                            <div>
+                                                <div className="font-medium text-gray-900 dark:text-white">
+                                                    {token.symbol}
+                                                </div>
+                                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                    {token.name}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                                                {token.apy}% APY
+                                            </div>
+                                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                {token.amount ?
+                                                    `${token.amount.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${token.symbol}` :
+                                                    `${(token.valueUsd / (token.symbol === 'USDS' ? 1 : token.symbol === 'ETH' ? 3400 : 1)).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${token.symbol}`
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Portfolio Breakdown - Pre-calculated Data - Show third */}
                         {protocolBreakdown && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
@@ -546,52 +636,9 @@ const ColorBoxes = () => {
                             </div>
                         )}
 
-                        {/* Token Information with Icons and APY */}
-                        {protocolBreakdown && protocolBreakdown.tokens && protocolBreakdown.tokens.length > 0 && (
-                            <div className="mt-6">
-                                <h4 className="text-lg font-semibold mb-4">Tokens</h4>
-                                <div className="space-y-3">
-                                    {protocolBreakdown.tokens.map((token: any, index: number) => (
-                                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                            <div className="flex items-center space-x-3">
-                                                {token.icon ? (
-                                                    <img 
-                                                        src={token.icon} 
-                                                        alt={token.symbol}
-                                                        className="w-8 h-8 rounded-full"
-                                                        onError={(e) => {
-                                                            e.currentTarget.style.display = 'none';
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
-                                                        {token.symbol.charAt(0)}
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <div className="font-medium text-gray-900 dark:text-white">
-                                                        {token.symbol}
-                                                    </div>
-                                                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {token.name}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-lg font-semibold text-green-600 dark:text-green-400">
-                                                    {token.apy}% APY
-                                                </div>
-                                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                    ${token.valueUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                        {/* Uniswap Positions */}
 
-{selectedProtocol?.title.toLowerCase() === 'uniswap' ? (
+                        {selectedProtocol?.title.toLowerCase() === 'uniswap' ? (
                             <div className="space-y-4">
                                 {/* Header with Select All */}
                                 <div className="flex items-center justify-between">
@@ -690,37 +737,7 @@ const ColorBoxes = () => {
                                     </div>
                                 )}
                             </div>
-                        ) : (
-                            <>
-                                {/* Current Portfolio Value - Other Protocols */}
-                                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                                    <h4 className="text-sm font-medium text-gray-500 mb-2">Current Portfolio Value</h4>
-                                    <p className="text-2xl font-bold">
-                                        {protocolBreakdown ? (() => {
-                                            // Round individual values the same way they're displayed
-                                            const roundedSupplied = protocolBreakdown.supplied < 100 ?
-                                                Math.round(protocolBreakdown.supplied * 100) / 100 :
-                                                Math.round(protocolBreakdown.supplied);
-                                            const roundedInterest = protocolBreakdown.interest < 100 ?
-                                                Math.round(protocolBreakdown.interest * 100) / 100 :
-                                                Math.round(protocolBreakdown.interest);
-                                            const total = roundedSupplied + roundedInterest;
-
-                                            console.log(`🧮 Portfolio Value Calculation:`, {
-                                                rawSupplied: protocolBreakdown.supplied,
-                                                rawInterest: protocolBreakdown.interest,
-                                                roundedSupplied,
-                                                roundedInterest,
-                                                total: total,
-                                                ceiling: Math.ceil(total)
-                                            });
-
-                                            return `$${Math.ceil(total).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-                                        })() : selectedProtocol?.price}
-                                    </p>
-                                </div>
-                            </>
-                        )}
+                        ) : null}
 
 
                         {/* Borrowed/Debt Section - Only for lending protocols that support borrowing */}
