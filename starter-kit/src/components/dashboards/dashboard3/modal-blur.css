@@ -1,0 +1,77 @@
+/* Custom modal backdrop blur styles for Flowbite React */
+
+/* Prevent page scroll when modal is open */
+.modal-open {
+    overflow: hidden !important;
+    height: 100vh !important;
+    position: fixed !important;
+    width: 100% !important;
+}
+
+html.modal-open {
+    overflow: hidden !important;
+}
+
+/* Target all possible Flowbite modal backdrop elements */
+div[data-modal-backdrop],
+div[data-modal-backdrop="static"],
+.fixed.inset-0.z-40,
+.fixed.inset-0.z-50,
+.bg-gray-900.bg-opacity-50,
+.bg-opacity-50 {
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+    background-color: rgba(17, 24, 39, 0.6) !important;
+}
+
+/* More specific targeting for Flowbite modals */
+[role="dialog"] + div,
+[role="dialog"] ~ div {
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+}
+
+/* Universal backdrop selectors */
+.fixed.inset-0[style*="z-index"] {
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+}
+
+/* Target parent containers */
+.relative.z-10,
+.relative.z-50 {
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+}
+
+/* Force blur on any modal overlay */
+div[class*="fixed"][class*="inset-0"] {
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+}
+
+/* Specific targeting for our protocol modal */
+#protocol-modal + div,
+#protocol-modal ~ div,
+#protocol-modal div[data-modal-backdrop] {
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+    background-color: rgba(17, 24, 39, 0.6) !important;
+}
+
+/* Global aggressive targeting */
+div[style*="position: fixed"],
+div[style*="z-index"],
+*[class*="modal"] div.fixed,
+*[role="dialog"] ~ div {
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+}
+
+/* Last resort - target any fixed positioned backdrop-looking element */
+body > div.fixed.inset-0,
+body > div[style*="position: fixed"][style*="inset: 0"] {
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+    background-color: rgba(17, 24, 39, 0.6) !important;
+}

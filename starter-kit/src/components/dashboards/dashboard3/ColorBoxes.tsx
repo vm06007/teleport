@@ -10,6 +10,7 @@ import RevenueForcastChart from "./RevenueForcastChart";
 import { fetchUserUniswapPositions, type UniswapPosition } from "src/services/uniswapService";
 import { useCollectInterest } from "src/hooks/useCollectInterest";
 import { getTokenMetadata, generateRandomAPY } from "../../../utils/tokenMappings";
+import "./modal-blur.css";
 
 const ColorBoxes = () => {
     const { account, chainId } = useWallet();
@@ -320,6 +321,102 @@ const ColorBoxes = () => {
         return () => document.removeEventListener('keydown', handleEscKey);
     }, [selectedProtocol]);
 
+    // Prevent background scrolling when modal is open
+    useEffect(() => {
+        if (selectedProtocol) {
+            // Store current scroll position
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            // Disable body scroll with multiple methods for better browser support
+            document.body.classList.add('modal-open');
+            document.documentElement.classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollTop}px`;
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.width = '100%';
+            document.documentElement.style.overflow = 'hidden';
+            
+            // Store scroll position for restoration
+            document.body.setAttribute('data-scroll-top', scrollTop.toString());
+        } else {
+            // Get stored scroll position
+            const scrollTop = parseInt(document.body.getAttribute('data-scroll-top') || '0');
+            
+            // Re-enable body scroll
+            document.body.classList.remove('modal-open');
+            document.documentElement.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            document.body.style.width = '';
+            document.documentElement.style.overflow = '';
+            
+            // Restore scroll position
+            window.scrollTo(0, scrollTop);
+            document.body.removeAttribute('data-scroll-top');
+        }
+
+        // Cleanup on unmount
+        return () => {
+            const scrollTop = parseInt(document.body.getAttribute('data-scroll-top') || '0');
+            document.body.classList.remove('modal-open');
+            document.documentElement.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            document.body.style.width = '';
+            document.documentElement.style.overflow = '';
+            if (scrollTop > 0) {
+                window.scrollTo(0, scrollTop);
+            }
+            document.body.removeAttribute('data-scroll-top');
+        };
+    }, [selectedProtocol]);
+
+    // Force blur effect on modal backdrop
+    useEffect(() => {
+        if (selectedProtocol) {
+            // Wait a bit for modal to render, then apply blur
+            const timer = setTimeout(() => {
+                // Try multiple selectors to catch the backdrop
+                const selectors = [
+                    '[data-modal-backdrop]',
+                    '.fixed.inset-0',
+                    'div[class*="fixed"][class*="inset-0"]',
+                    '.bg-gray-900',
+                    '.bg-opacity-50',
+                    '#protocol-modal + div',
+                    '#protocol-modal ~ div',
+                    'div[style*="z-index"]'
+                ];
+                
+                selectors.forEach(selector => {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(element => {
+                        const htmlElement = element as HTMLElement;
+                        // Only apply to elements that look like modal backdrops
+                        if (htmlElement.classList.contains('fixed') || 
+                            htmlElement.hasAttribute('data-modal-backdrop') ||
+                            htmlElement.style.zIndex) {
+                            htmlElement.style.backdropFilter = 'blur(3px)';
+                            (htmlElement.style as any).webkitBackdropFilter = 'blur(3px)';
+                            htmlElement.style.backgroundColor = 'rgba(17, 24, 39, 0.6)';
+                            console.log('Applied blur to:', selector, htmlElement);
+                        }
+                    });
+                });
+            }, 100);
+
+            return () => clearTimeout(timer);
+        }
+    }, [selectedProtocol]);
+
     const formatUSDValue = (value: number) => {
         if (value >= 1000) {
             return `$${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
@@ -514,6 +611,9 @@ const ColorBoxes = () => {
                     setShowTokenBreakdown(false); // Reset token breakdown to collapsed
                 }}
                 size="lg"
+                className="modal-backdrop-blur"
+                dismissible={true}
+                id="protocol-modal"
             >
                 <Modal.Header>
                     <div className="flex items-center space-x-3">
