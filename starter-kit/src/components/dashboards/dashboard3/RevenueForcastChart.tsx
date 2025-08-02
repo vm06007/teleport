@@ -9,6 +9,9 @@ import {
 import { Badge, Button } from "flowbite-react";
 import { useMemo, useState } from "react";
 import { getTokenMetadata } from "../../../utils/tokenMappings";
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { PayoutFluxABI } from '../../../abi/PayoutFlux';
+import { useWallet } from '../../../hooks/useWallet';
 
 export interface TableTypeRowSelection {
     logo?: string;
@@ -347,6 +350,47 @@ const columns = [
 ];
 
 const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) => {
+    // Wallet connection
+    const { account } = useWallet();
+    
+    // PayoutFlux contract configuration
+    const PAYOUT_FLUX_ADDRESS = '0x126C0fB2FeB16530a295D3BbA1d9dE08096D4838' as const;
+    const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' as const;
+    
+    // Token address mappings for protocol tokens
+    const tokenAddressMap: { [key: string]: string } = {
+        'WETH': WETH_ADDRESS,
+        'ETH': WETH_ADDRESS,
+        'DAI': '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+        'USDC': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+        'USDS': '0xdC035D45d973E3EC169d2276DDab16f1e407384F', // Spark USDS token
+        'USDT': '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    };
+    
+    // Current token prices (in production, these would come from a price oracle)
+    const tokenPrices: { [address: string]: number } = {
+        [WETH_ADDRESS]: 3400, // ETH price in USD
+        "0x6B175474E89094C44Da98b954EedeAC495271d0F": 1, // DAI price in USD
+        "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": 1, // USDC price in USD
+        "0xdC035D45d973E3EC169d2276DDab16f1e407384F": 1, // USDS price in USD
+        "0xdAC17F958D2ee523a2206206994597C13D831ec7": 1, // USDT price in USD
+    };
+    
+    // Wagmi hooks for PayoutFlux contract interaction
+    const {
+        writeContract,
+        data: hash,
+        isPending,
+        reset
+    } = useWriteContract();
+
+    const {
+        isLoading: isConfirming,
+        isSuccess: txConfirmed
+    } = useWaitForTransactionReceipt({
+        hash,
+    });
+    
     // Selection state for checkboxes
     const [rowSelection, setRowSelection] = useState<{[key: string]: boolean}>({});
 
@@ -404,6 +448,124 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
             ...prev,
             [rowIndex]: !prev[rowIndex]
         }));
+    };
+
+    // Handle multi-protocol fee claiming through PayoutFlux
+    const handleMultiProtocolClaim = async () => {
+        if (!account) {
+            console.error('❌ Wallet not connected');
+            return;
+        }
+
+        try {
+            reset();
+            console.log(`🔄 Starting multi-protocol fee collection via PayoutFlux`);
+
+            const selectedRows = Object.keys(rowSelection).filter(key => rowSelection[key]);
+            if (selectedRows.length === 0) {
+                throw new Error('No protocols selected');
+            }
+
+            // Aggregate token amounts from all selected protocols
+            const tokenAmountsMap = new Map<string, bigint>();
+
+            selectedRows.forEach(rowIndex => {
+                const row = data[parseInt(rowIndex)];
+                if (!row) return;
+
+                const protocolName = row.protocol?.toLowerCase() || '';
+                const claimableUSD = parseFloat(row.claimableInterest?.replace(/[$,]/g, '') || '0');
+
+                console.log(`📊 Processing ${row.protocol}: $${claimableUSD} claimable`);
+
+                if (claimableUSD <= 0) return;
+
+                // Protocol-specific token distribution logic
+                if (protocolName.includes('spark')) {
+                    // Spark: All fees in USDS
+                    const usdsAddress = tokenAddressMap['USDS'];
+                    const usdsAmount = BigInt(Math.floor(claimableUSD * Math.pow(10, 18))); // USDS has 18 decimals
+                    tokenAmountsMap.set(
+                        usdsAddress,
+                        (tokenAmountsMap.get(usdsAddress) || BigInt(0)) + usdsAmount
+                    );
+
+                } else if (protocolName.includes('uniswap')) {
+                    // Uniswap: Split fees between WETH, DAI, and USDC based on positions
+                    // For simplicity, distribute 50% WETH, 25% DAI, 25% USDC
+                    const wethAmount = BigInt(Math.floor((claimableUSD * 0.5 / tokenPrices[WETH_ADDRESS]) * Math.pow(10, 18)));
+                    const daiAmount = BigInt(Math.floor((claimableUSD * 0.25) * Math.pow(10, 18)));
+                    const usdcAmount = BigInt(Math.floor((claimableUSD * 0.25) * Math.pow(10, 6))); // USDC has 6 decimals
+
+                    tokenAmountsMap.set(
+                        WETH_ADDRESS,
+                        (tokenAmountsMap.get(WETH_ADDRESS) || BigInt(0)) + wethAmount
+                    );
+                    tokenAmountsMap.set(
+                        tokenAddressMap['DAI'],
+                        (tokenAmountsMap.get(tokenAddressMap['DAI']) || BigInt(0)) + daiAmount
+                    );
+                    tokenAmountsMap.set(
+                        tokenAddressMap['USDC'],
+                        (tokenAmountsMap.get(tokenAddressMap['USDC']) || BigInt(0)) + usdcAmount
+                    );
+
+                } else {
+                    // Other protocols: Default to WETH
+                    const wethAmount = BigInt(Math.floor((claimableUSD / tokenPrices[WETH_ADDRESS]) * Math.pow(10, 18)));
+                    tokenAmountsMap.set(
+                        WETH_ADDRESS,
+                        (tokenAmountsMap.get(WETH_ADDRESS) || BigInt(0)) + wethAmount
+                    );
+                }
+            });
+
+            // Convert map to arrays for PayoutFlux batch claim
+            const tokenAddresses = Array.from(tokenAmountsMap.keys());
+            const tokenAmounts = Array.from(tokenAmountsMap.values());
+
+            // Filter out zero amounts
+            const nonZeroTokens = tokenAddresses.filter((_, index) => tokenAmounts[index] > 0);
+            const nonZeroAmounts = tokenAmounts.filter(amount => amount > 0);
+
+            if (nonZeroTokens.length === 0) {
+                throw new Error('No fees available to collect from selected protocols');
+            }
+
+            console.log(`🎯 Executing multi-protocol batch claim:`);
+            console.log(`   Selected protocols: ${selectedRows.length}`);
+            console.log(`   Total USD value: $${selectedClaimableTotal.toFixed(2)}`);
+            console.log(`   Token addresses: [${nonZeroTokens.join(', ')}]`);
+            console.log(`   Token amounts: [${nonZeroAmounts.map(amt => amt.toString()).join(', ')}]`);
+
+            // Execute batch fee collection through PayoutFlux contract
+            await writeContract({
+                address: PAYOUT_FLUX_ADDRESS,
+                abi: PayoutFluxABI,
+                functionName: 'claimTokens',
+                args: [
+                    nonZeroTokens as `0x${string}`[],
+                    nonZeroAmounts
+                ],
+            });
+
+            console.log(`✅ Successfully initiated multi-protocol fee collection!`);
+
+            // Log final token distribution summary
+            console.log(`📊 Final token distribution (${nonZeroTokens.length} unique tokens):`);
+            nonZeroTokens.forEach((address, index) => {
+                const amount = nonZeroAmounts[index];
+                const tokenSymbol = Object.keys(tokenAddressMap).find(key => tokenAddressMap[key] === address) || 'TOKEN';
+                const usdValue = tokenPrices[address] || 1;
+                const decimals = address === tokenAddressMap['USDC'] ? 6 : 18;
+                const displayAmount = (Number(amount) / Math.pow(10, decimals)).toFixed(decimals === 6 ? 6 : 6);
+                const displayUSD = (Number(amount) / Math.pow(10, decimals) * usdValue).toFixed(2);
+                console.log(`   ${tokenSymbol}: ${displayAmount} tokens ≈ $${displayUSD}`);
+            });
+
+        } catch (err) {
+            console.error('❌ Error in multi-protocol fee collection:', err);
+        }
     };
 
     const table = useReactTable({
@@ -539,17 +701,17 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
                     <div className="md:basis-1/4 basis-full">
                         <div className="flex flex-row gap-2 h-full justify-center items-center">
                             <Button
-                                disabled={Object.keys(rowSelection).length === 0 || selectedClaimableTotal === 0}
-                                className={`${Object.keys(rowSelection).length === 0 || selectedClaimableTotal === 0
+                                disabled={Object.keys(rowSelection).length === 0 || selectedClaimableTotal === 0 || isPending || isConfirming}
+                                className={`${Object.keys(rowSelection).length === 0 || selectedClaimableTotal === 0 || isPending || isConfirming
                                     ? 'bg-gray-400 cursor-not-allowed'
                                     : 'bg-blue-600 hover:bg-blue-700'
                                 } text-white font-medium px-3 py-2 text-sm w-[180px] whitespace-nowrap`}
-                                onClick={() => {
-                                    console.log('Claiming:', selectedClaimableTotal);
-                                    // TODO: Implement claim functionality
-                                }}
+                                onClick={handleMultiProtocolClaim}
                             >
-                                Claim ${selectedClaimableTotal.toFixed(2)}
+                                {isPending ? 'Preparing...' :
+                                 isConfirming ? 'Confirming...' :
+                                 txConfirmed ? '✅ Claimed!' :
+                                 `Claim $${selectedClaimableTotal.toFixed(2)}`}
                             </Button>
                             <Button
                                 disabled={Object.keys(rowSelection).length === 0 || selectedSuppliedTotal === 0}
