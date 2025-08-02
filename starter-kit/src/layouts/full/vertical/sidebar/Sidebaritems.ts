@@ -42,7 +42,7 @@ const SidebarContent: MenuItem[] = [
             url: "/",
           },
           {
-            name: "Kanban Board",
+            name: "Interactive Board",
             icon: "solar:clipboard-list-outline",
             id: uniqueId(),
             url: "/apps/kanban",
