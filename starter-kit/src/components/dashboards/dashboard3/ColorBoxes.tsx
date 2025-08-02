@@ -324,41 +324,29 @@ const ColorBoxes = () => {
     // Prevent background scrolling when modal is open
     useEffect(() => {
         if (selectedProtocol) {
-            // Store current scroll position
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            // Block all background scrolling completely
+            document.body.classList.add('modal-open');
+            document.documentElement.classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
 
-            // Disable body scroll with multiple methods for better browser support
-
-
-            // Store scroll position for restoration
-            document.body.setAttribute('data-scroll-top', scrollTop.toString());
+            console.log('🔒 Modal opened - background scroll completely locked');
         } else {
-            // Get stored scroll position
-            const scrollTop = parseInt(document.body.getAttribute('data-scroll-top') || '0');
+            // Restore scrolling when modal closes
+            document.body.classList.remove('modal-open');
+            document.documentElement.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
 
-
-
-            // Restore scroll position
-            window.scrollTo(0, scrollTop);
-            document.body.removeAttribute('data-scroll-top');
+            console.log('🔓 Modal closed - background scroll restored');
         }
 
         // Cleanup on unmount
         return () => {
-            const scrollTop = parseInt(document.body.getAttribute('data-scroll-top') || '0');
             document.body.classList.remove('modal-open');
             document.documentElement.classList.remove('modal-open');
             document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.left = '';
-            document.body.style.right = '';
-            document.body.style.width = '';
             document.documentElement.style.overflow = '';
-            if (scrollTop > 0) {
-                window.scrollTo(0, scrollTop);
-            }
-            document.body.removeAttribute('data-scroll-top');
         };
     }, [selectedProtocol]);
 
@@ -624,7 +612,7 @@ const ColorBoxes = () => {
                         />
                     </button>
                 </Modal.Header>
-                <Modal.Body>
+                <Modal.Body className="max-h-[70vh] overflow-y-auto pt-0">
                     <div className="space-y-6">
                         {/* Current Portfolio Value - Always show first */}
                         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
@@ -909,18 +897,18 @@ const ColorBoxes = () => {
                             </div>
                         ) : (
                             // Other Protocol Actions
-                            <div className="flex space-x-3">
-                                <Button
-                                    onClick={() => handleCollectInterest(selectedProtocol)}
-                                    className="flex-1 bg-blue-600 hover:bg-blue-700"
-                                    disabled={isPending || isConfirming}
-                                >
+                        <div className="flex space-x-3">
+                            <Button
+                                onClick={() => handleCollectInterest(selectedProtocol)}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                disabled={isPending || isConfirming}
+                            >
                                     {isPending && operationType === 'collect' ? 'Preparing...' :
                                      isConfirming && operationType === 'collect' ? 'Confirming...' :
                                      isConfirmed && operationType === 'collect' ? '✅ Collected!' :
                                      'Collect Interest'}
-                                </Button>
-                                <Button
+                            </Button>
+                            <Button
                                     onClick={() => handleExitPosition(selectedProtocol)}
                                     className="flex-1 bg-red-600 hover:bg-red-700"
                                     disabled={isPending || isConfirming}
@@ -929,8 +917,8 @@ const ColorBoxes = () => {
                                      isConfirming && operationType === 'exit' ? 'Confirming...' :
                                      isConfirmed && operationType === 'exit' ? '✅ Exited!' :
                                      'Exit Protocol'}
-                                </Button>
-                            </div>
+                            </Button>
+                        </div>
                         )}
 
                         {/* Success Message */}

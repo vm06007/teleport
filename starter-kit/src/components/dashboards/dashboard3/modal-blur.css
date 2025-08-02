@@ -3,9 +3,6 @@
 /* Prevent page scroll when modal is open */
 .modal-open {
     overflow: hidden !important;
-    height: 100vh !important;
-    position: fixed !important;
-    width: 100% !important;
 }
 
 html.modal-open {

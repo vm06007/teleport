@@ -135,7 +135,7 @@ const customTheme = {
       xl: "max-w-xl",
     },
     body: {
-      base: "flex-1 overflow-auto p-6",
+      base: "flex-1 overflow-auto p-6 pt-0",
       popup: "pt-0",
     },
     header: {
