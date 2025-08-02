@@ -29,7 +29,7 @@ const POSITION_MANAGER_ABI = [
 export const useCollectInterest = (protocolName: string) => {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [operationType, setOperationType] = useState<'collect' | 'exit' | null>(null);
+  const [operationType, setOperationType] = useState<'collect' | 'exit' | 'withdraw' | null>(null);
 
   const {
     writeContract,

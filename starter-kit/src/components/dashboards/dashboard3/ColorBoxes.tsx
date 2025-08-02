@@ -269,6 +269,27 @@ const ColorBoxes = () => {
         }
     };
 
+    const handleWithdrawLiquidity = async () => {
+        if (!account || selectedPositions.size === 0) return;
+
+        const selectedPositionData = uniswapPositions.filter(p =>
+            selectedPositions.has(p.tokenId)
+        );
+
+        try {
+            console.log('Withdrawing liquidity from selected positions:', selectedPositionData);
+            // TODO: Implement liquidity withdrawal functionality
+            // This would involve calling the PositionManager's burn or withdraw functions
+            // For now, just log the operation
+            console.log('Withdraw liquidity functionality will be implemented in production');
+            
+            // Set operation type for UI feedback
+            // This would be part of an actual withdrawal hook call in production
+        } catch (error) {
+            console.error('Error withdrawing liquidity:', error);
+        }
+    };
+
     // Watch for transaction confirmation
     useEffect(() => {
         if (isConfirmed) {
@@ -785,15 +806,16 @@ const ColorBoxes = () => {
                                      isConfirmed && operationType === 'collect' ? '✅ Collected!' :
                                      `Collect Fees (${selectedPositions.size})`}
                                 </Button>
-                                {selectedPositions.size > 0 && (
-                                    <Button
-                                        color="gray"
-                                        onClick={() => setSelectedPositions(new Set())}
-                                        className="px-4"
-                                    >
-                                        Clear
-                                    </Button>
-                                )}
+                                <Button
+                                    onClick={handleWithdrawLiquidity}
+                                    className="flex-1 bg-red-600 hover:bg-red-700"
+                                    disabled={isPending || isConfirming || selectedPositions.size === 0}
+                                >
+                                    {isPending && operationType === 'withdraw' ? 'Preparing...' :
+                                     isConfirming && operationType === 'withdraw' ? 'Confirming...' :
+                                     isConfirmed && operationType === 'withdraw' ? '✅ Withdrawn!' :
+                                     `Withdraw Liquidity (${selectedPositions.size})`}
+                                </Button>
                             </div>
                         ) : (
                             // Other Protocol Actions
