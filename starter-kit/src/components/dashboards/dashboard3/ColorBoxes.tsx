@@ -27,14 +27,17 @@ const ColorBoxes = () => {
     const [protocolBreakdowns, setProtocolBreakdowns] = useState<any>({});
     const [loading, setLoading] = useState(false);
 
-    // Wagmi hook for collecting interest
+    // Wagmi hook for collecting interest and exiting positions
     const {
         collectInterest,
+        exitPosition,
         isPending,
         isConfirming,
         isConfirmed,
-        error: collectError
-    } = useCollectInterest(selectedProtocol?.name || '');
+        error: collectError,
+        hash,
+        operationType
+    } = useCollectInterest(selectedProtocol?.title || '');
 
     useEffect(() => {
         if (account && chainId) {
@@ -160,29 +163,52 @@ const ColorBoxes = () => {
         if (!protocol || !account) return;
 
         try {
-            console.log('Collecting interest from:', protocol.name);
+            console.log('Collecting interest from:', protocol.title);
             await collectInterest(account);
         } catch (error) {
             console.error('Error collecting interest:', error);
         }
     };
 
+    const handleExitPosition = async (protocol: any) => {
+        if (!protocol || !account) return;
+
+        try {
+            console.log('Exiting position from:', protocol.title);
+            await exitPosition(account);
+        } catch (error) {
+            console.error('Error exiting position:', error);
+        }
+    };
+
     // Watch for transaction confirmation
     useEffect(() => {
         if (isConfirmed) {
-            console.log('Interest collected successfully!');
+            console.log(`${operationType === 'exit' ? 'Position exited' : 'Interest collected'} successfully!`);
             // Refresh portfolio data to show updated balances
             fetchPortfolioDataFromService();
         }
-    }, [isConfirmed]);
+    }, [isConfirmed, operationType]);
 
     // Handle collection errors
     useEffect(() => {
         if (collectError) {
-            console.error('Failed to collect interest:', collectError);
-            alert(`Failed to collect interest: ${collectError.message}`);
+            console.error(`Failed to ${operationType === 'exit' ? 'exit position' : 'collect interest'}:`, collectError);
         }
-    }, [collectError]);
+    }, [collectError, operationType]);
+
+    // Handle ESC key to close modal
+    useEffect(() => {
+        const handleEscKey = (event: KeyboardEvent) => {
+            if (event.key === 'Escape' && selectedProtocol) {
+                setSelectedProtocol(null);
+                setProtocolBreakdown(null);
+            }
+        };
+
+        document.addEventListener('keydown', handleEscKey);
+        return () => document.removeEventListener('keydown', handleEscKey);
+    }, [selectedProtocol]);
 
     const formatUSDValue = (value: number) => {
         if (value >= 1000) {
@@ -492,16 +518,47 @@ const ColorBoxes = () => {
                                 className="flex-1 bg-blue-600 hover:bg-blue-700"
                                 disabled={isPending || isConfirming}
                             >
-                                {isPending ? 'Preparing...' : isConfirming ? 'Confirming...' : 'Collect Interest'}
+                                {isPending && operationType === 'collect' ? 'Preparing...' :
+                                 isConfirming && operationType === 'collect' ? 'Confirming...' :
+                                 isConfirmed && operationType === 'collect' ? '✅ Collected!' :
+                                 'Collect Interest'}
                             </Button>
                             <Button
-                                color="gray"
-                                onClick={() => setSelectedProtocol(null)}
-                                className="flex-1"
+                                onClick={() => handleExitPosition(selectedProtocol)}
+                                className="flex-1 bg-red-600 hover:bg-red-700"
+                                disabled={isPending || isConfirming}
                             >
-                                Close
+                                {isPending && operationType === 'exit' ? 'Preparing...' :
+                                 isConfirming && operationType === 'exit' ? 'Confirming...' :
+                                 isConfirmed && operationType === 'exit' ? '✅ Exited!' :
+                                 'Exit Protocol'}
                             </Button>
                         </div>
+
+                        {/* Success Message */}
+                        {isConfirmed && hash && (
+                            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                                <div className="flex items-center">
+                                    <Icon icon="material-symbols:check-circle" className="text-green-600 dark:text-green-400 mr-2" />
+                                    <div>
+                                        <h5 className="text-sm font-medium text-green-600 dark:text-green-400">
+                                            {operationType === 'exit' ? 'Position Exited Successfully!' : 'Interest Collected Successfully!'}
+                                        </h5>
+                                        <p className="text-xs text-green-600 dark:text-green-300 mt-1">
+                                            Transaction:
+                                            <a
+                                                href={`https://etherscan.io/tx/${hash}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="ml-1 underline hover:text-green-700"
+                                            >
+                                                {hash.slice(0, 10)}...{hash.slice(-8)}
+                                            </a>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* No Position Message */}
                         {protocolBreakdown && protocolBreakdown.supplied === 0 && protocolBreakdown.interest === 0 && (
