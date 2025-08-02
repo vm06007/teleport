@@ -12,9 +12,6 @@ const Dashboard3 = () => {
                 <div className="col-span-12">
                     <ColorBoxes />
                 </div>
-                <div className="lg:col-span-4 col-span-12">
-                    <AnnualProfit />
-                </div>
             </div>
         </>
     )
