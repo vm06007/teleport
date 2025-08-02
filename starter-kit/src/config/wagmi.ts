@@ -1,6 +1,6 @@
 import { createConfig, http } from 'wagmi';
 import { mainnet, arbitrum, optimism, polygon, base } from 'wagmi/chains';
-import { injected, walletConnect } from 'wagmi/connectors';
+import { injected } from 'wagmi/connectors';
 
 // Create wagmi config
 export const wagmiConfig = createConfig({
