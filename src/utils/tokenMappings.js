@@ -5,6 +5,7 @@ export const TOKEN_ADDRESSES = {
         USDC: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
         USDT: "0xdac17f958d2ee523a2206206994597c13d831ec7",
         DAI: "0x6b175474e89094c44da98b954eedeac495271d0f",
+        USDS: "0xdC035D45d973E3EC169d2276DDab16f1e407384F", // USDS token
         WETH: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
         WBTC: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
         LINK: "0x514910771af9ca656af840dff83e8264ecf986ca",
@@ -54,6 +55,7 @@ export const STANDARD_TOKEN_PRICES = {
     USDC: 1.00,
     USDT: 1.00,
     DAI: 1.00,
+    USDS: 1.00,
     WETH: 3400.00,
     ETH: 3400.00,
     WBTC: 65000.00,
@@ -89,4 +91,62 @@ export const getNativeCurrencySymbol = (chainId) => {
         default:
             return "ETH";
     }
+};
+
+// Token icons and metadata
+export const TOKEN_METADATA = {
+    USDC: {
+        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+        name: "USD Coin",
+        symbol: "USDC",
+        apyRange: { min: 4, max: 8 }
+    },
+    USDT: {
+        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+        name: "Tether USD",
+        symbol: "USDT", 
+        apyRange: { min: 4, max: 8 }
+    },
+    DAI: {
+        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+        name: "Dai Stablecoin",
+        symbol: "DAI",
+        apyRange: { min: 4, max: 8 }
+    },
+    USDS: {
+        icon: "https://assets.coingecko.com/coins/images/39926/standard/usds.webp?1726666683",
+        name: "USDS Stablecoin",
+        symbol: "USDS",
+        apyRange: { min: 4, max: 8 }
+    },
+    WETH: {
+        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+        name: "Wrapped Ether",
+        symbol: "WETH",
+        apyRange: { min: 2, max: 12 }
+    },
+    ETH: {
+        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+        name: "Ethereum",
+        symbol: "ETH",
+        apyRange: { min: 2, max: 12 }
+    }
+};
+
+// Get token metadata including icon and APY range
+export const getTokenMetadata = (symbol) => {
+    const normalizedSymbol = getNormalizedSymbol(symbol);
+    return TOKEN_METADATA[normalizedSymbol] || {
+        icon: null,
+        name: symbol,
+        symbol: symbol,
+        apyRange: { min: 0, max: 5 }
+    };
+};
+
+// Generate random APY within token's range
+export const generateRandomAPY = (symbol) => {
+    const metadata = getTokenMetadata(symbol);
+    const { min, max } = metadata.apyRange;
+    return (Math.random() * (max - min) + min).toFixed(2);
 };
