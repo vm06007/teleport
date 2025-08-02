@@ -189,16 +189,21 @@ const transformProtocolData = (
                     protocolIcon: config.icon,
                     tokens: protocolTokens,
                     apy: (() => {
-                        // Use specific APY values for certain protocols
-                        switch (key.toLowerCase()) {
-                            case 'spark':
-                                return '7.5%';
-                            case 'uniswap':
-                                return '4.3%';
-                            default:
-                                return breakdown.supplied > 0 ?
-                                    `${((breakdown.interest / breakdown.supplied) * 100).toFixed(1)}%` : '0.0%';
+                        // Use actual APY from token data if available
+                        if (breakdown.tokens && breakdown.tokens.length > 0) {
+                            const tokenAPYs = breakdown.tokens
+                                .map((token: any) => parseFloat(token.apy))
+                                .filter((apy: number) => !isNaN(apy) && apy > 0);
+                            
+                            if (tokenAPYs.length > 0) {
+                                const averageAPY = tokenAPYs.reduce((sum: number, apy: number) => sum + apy, 0) / tokenAPYs.length;
+                                return `${averageAPY.toFixed(1)}%`;
+                            }
                         }
+                        
+                        // Fallback to calculated APY
+                        return breakdown.supplied > 0 ?
+                            `${((breakdown.interest / breakdown.supplied) * 100).toFixed(1)}%` : '0.0%';
                     })(),
                     supplied: breakdown.supplied < 100 ?
                         `$${breakdown.supplied.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
