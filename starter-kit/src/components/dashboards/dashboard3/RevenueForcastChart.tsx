@@ -1,4 +1,3 @@
-
 import CardBox from "../../shared/CardBox";
 import { Icon } from "@iconify/react";
 import {
@@ -8,12 +7,8 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { Badge } from "flowbite-react";
-import React, { useState, useEffect } from "react";
-import { useWallet } from "../../../hooks/useWallet";
-import { fetchPortfolioData } from "../../../services/portfolioService";
+import { useMemo } from "react";
 
-
-// Interest is now calculated directly from API profit/loss data
 
 export interface TableTypeRowSelection {
   logo?: string;
@@ -35,7 +30,17 @@ export interface TableTypeRowSelection {
   selection?: any;
 }
 
-// Match the protocols from ColorBoxes component
+interface ProtocolBreakdown {
+  supplied: number;
+  interest: number;
+  [key: string]: any;
+}
+
+interface RevenueForcastChartProps {
+  protocolBreakdowns: Record<string, ProtocolBreakdown>;
+}
+
+// Protocol configuration for display
 const protocolsConfig = [
   {
     name: "Pendle",
@@ -81,162 +86,78 @@ const protocolsConfig = [
   }
 ];
 
-const basicTableData: TableTypeRowSelection[] = [
-  {
-    logo: protocolsConfig[1].logo, // Aave
-    protocol: "Aave",
-    chain: "Ethereum",
-    protocolIcon: protocolsConfig[1].icon,
-    tokens: [
-      {
-        id: "1",
-        symbol: "USDC",
-        color: "primary",
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
-      },
-      {
-        id: "2",
-        symbol: "ETH",
-        color: "secondary",
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png",
-      },
-    ],
-    apy: "4.2%",
-    supplied: "$32,530",
-    currentValue: "$34,530",
-    claimableInterest: "$2,000",
-    status: "Active",
-    statuscolor: "success",
-  },
-  {
-    logo: protocolsConfig[2].logo, // Curve
-    protocol: "Curve",
-    chain: "Ethereum",
-    protocolIcon: protocolsConfig[2].icon,
-    tokens: [
-      {
-        id: "1",
-        symbol: "3CRV",
-        color: "error",
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xD533a949740bb3306d119CC777fa900bA034cd52/logo.png",
-      },
-      {
-        id: "2",
-        symbol: "USDT",
-        color: "success",
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
-      },
-    ],
-    apy: "7.3%",
-    supplied: "$110,722",
-    currentValue: "$122,722",
-    claimableInterest: "$12,000",
-    status: "Active",
-    statuscolor: "success",
-  },
-  {
-    logo: protocolsConfig[4].logo, // Uniswap
-    protocol: "Uniswap",
-    chain: "Ethereum",
-    protocolIcon: protocolsConfig[4].icon,
-    tokens: [
-      {
-        id: "1",
-        symbol: "USDT",
-        color: "success",
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
-      },
-      {
-        id: "2",
-        symbol: "USDC",
-        color: "primary",
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
-      },
-    ],
-    apy: "12.5%",
-    supplied: "$1,100",
-    currentValue: "$1,234",
-    claimableInterest: "$134",
-    status: "Active",
-    statuscolor: "success",
-  },
-  {
-    logo: protocolsConfig[0].logo, // Pendle
-    protocol: "Pendle",
-    chain: "Ethereum",
-    protocolIcon: protocolsConfig[0].icon,
-    tokens: [
-      {
-        id: "1",
-        symbol: "PT-stETH",
-        color: "primary",
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png",
-      },
-      {
-        id: "2",
-        symbol: "YT-stETH",
-        color: "warning",
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png",
-      },
-    ],
-    apy: "18.4%",
-    supplied: "$50,000",
-    currentValue: "$50,626",
-    claimableInterest: "$626",
-    status: "Active",
-    statuscolor: "success",
-  },
-  {
-    logo: protocolsConfig[3].logo, // Spark
-    protocol: "Spark",
-    chain: "Ethereum",
-    protocolIcon: protocolsConfig[3].icon,
-    tokens: [
-      {
-        id: "1",
-        symbol: "DAI",
-        color: "warning",
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
-      },
-      {
-        id: "2",
-        symbol: "sDAI",
-        color: "warning",
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
-      },
-    ],
-    apy: "5.1%",
-    supplied: "$58,000",
-    currentValue: "$61,182",
-    claimableInterest: "$3,182",
-    status: "Active",
-    statuscolor: "success",
-  },
-];
+// Default token configurations for different protocols
+const getDefaultTokens = (protocolKey: string) => {
+  switch (protocolKey.toLowerCase()) {
+    case 'uniswap':
+      return [
+        { id: "1", symbol: "ETH", color: "secondary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png" },
+        { id: "2", symbol: "WISE", color: "primary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x66a0f676479cee1d7373f3dc2e2952778bff5bd6/logo.png" }
+      ];
+    default:
+      return [
+        { id: "1", symbol: "USDS", color: "primary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdc035d45d973e3ec169d2276ddab16f1e407384f/logo.png" },
+        { id: "2", symbol: "ETH", color: "secondary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png" }
+      ];
+  }
+};
+
+const transformProtocolData = (
+  protocolBreakdowns: Record<string, ProtocolBreakdown>
+): TableTypeRowSelection[] => {
+  if (!protocolBreakdowns || Object.keys(protocolBreakdowns).length === 0) {
+    return [];
+  }
+
+  const tableData: TableTypeRowSelection[] = [];
+
+  Object.entries(protocolBreakdowns).forEach(([key, breakdown]) => {
+    if (breakdown.supplied > 0 || breakdown.interest > 0) {
+      const protocolName = key.charAt(0).toUpperCase() + key.slice(1);
+      const displayName = key === 'oneInch' ? '1inch' : protocolName;
+
+      const config = protocolsConfig.find(p =>
+        p.name.toLowerCase().includes(key.toLowerCase()) ||
+        (key === 'oneInch' && p.name.toLowerCase().includes('1inch'))
+      );
+
+      if (config) {
+        tableData.push({
+          logo: config.logo,
+          protocol: displayName === 'Uniswap' ? 'Uniswap V4' : displayName,
+          chain: config.chain,
+          protocolIcon: config.icon,
+          tokens: getDefaultTokens(key),
+          apy: breakdown.supplied > 0 ?
+            `${((breakdown.interest / breakdown.supplied) * 100).toFixed(1)}%` : '0.0%',
+          supplied: breakdown.supplied < 100 ?
+            `$${breakdown.supplied.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
+            `$${breakdown.supplied.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
+          claimableInterest: breakdown.interest < 100 ?
+            `$${breakdown.interest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
+            `$${breakdown.interest.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
+          status: breakdown.interest > 0 ? "Active" : "No Profit",
+          statuscolor: breakdown.interest > 0 ? "success" : "warning"
+        });
+      }
+    }
+  });
+
+  return tableData;
+};
 
 const columnHelper = createColumnHelper<TableTypeRowSelection>();
 
 const columns = [
-  columnHelper.accessor("selection", {
-    header: ({ table }) => {
-      const ref = React.useRef<HTMLInputElement>(null);
-
-      React.useEffect(() => {
-        if (ref.current) {
-          ref.current.indeterminate = table.getIsSomeRowsSelected();
-        }
-      }, [table.getIsSomeRowsSelected()]);
-
-      return (
-        <input
-          type="checkbox"
-          ref={ref}
-          checked={table.getIsAllRowsSelected()}
-          onChange={table.getToggleAllRowsSelectedHandler()}
-          className=" h-[18px] w-[18px] border border-border dark:border-darkborder bg-white dark:bg-transparent !data-[checked]:bg-primary dark:data-[checked]:bg-primary rounded cursor-pointer focus:ring-0 focus:ring-offset-0 outline-none"
-        />
-      );
-    },
+  columnHelper.display({
+    header: ({ table }) => (
+      <input
+        type="checkbox"
+        checked={table.getIsAllRowsSelected()}
+        onChange={table.getToggleAllRowsSelectedHandler()}
+        className=" h-[18px] w-[18px] border border-border dark:border-darkborder bg-white dark:bg-transparent !data-[checked]:bg-primary dark:data-[checked]:bg-primary rounded cursor-pointer focus:ring-0 focus:ring-offset-0 outline-none"
+      />
+    ),
     cell: ({ row }) => (
       <input
         type="checkbox"
@@ -258,13 +179,9 @@ const columns = [
             style={{ height: '32px', borderRadius: '20px' }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              console.log(`Failed to load image: ${target.src} for protocol: ${info.row.original.protocol}`);
               target.style.display = 'none';
               const iconFallback = target.nextSibling as HTMLElement;
               if (iconFallback) iconFallback.style.display = 'flex';
-            }}
-            onLoad={() => {
-              console.log(`Successfully loaded image for protocol: ${info.row.original.protocol}`);
             }}
           />
           <div className="hidden items-center justify-center bg-gray-200 dark:bg-gray-700" style={{ height: '32px', width: '32px', borderRadius: '20px' }}>
@@ -330,10 +247,14 @@ const columns = [
   }),
   columnHelper.accessor("supplied", {
     header: () => <span>Supplied</span>,
-    cell: (info) => <p className="text-base font-medium">{info.getValue()}</p>,
+    cell: (info) => (
+      <span className="text-base font-semibold">
+        {info.getValue()}
+      </span>
+    ),
   }),
   columnHelper.accessor("claimableInterest", {
-    header: () => <span>Interest</span>,
+    header: () => <span>Claimable Interest</span>,
     cell: (info) => (
       <span className="text-base font-semibold text-blue-600 dark:text-blue-400">
         {info.getValue()}
@@ -343,468 +264,102 @@ const columns = [
   columnHelper.accessor("status", {
     header: () => <span>Status</span>,
     cell: (info) => (
-      <Badge
-        color={`light${info.row.original.statuscolor}`}
-        className="capitalize"
-      >
+      <Badge color={info.row.original.statuscolor as any} className="font-medium">
         {info.getValue()}
       </Badge>
     ),
   }),
 ];
-interface RevenueForcastChartProps {
-  protocolBreakdowns?: any;
-}
 
 const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) => {
-  const { account, isConnected, chainId } = useWallet();
-  const [data, setData] = useState<TableTypeRowSelection[]>(basicTableData);
-  const [loading, setLoading] = useState(false);
-  const [rowSelection, setRowSelection] = useState({});
+  // Transform the prop data into table format
+  const data = useMemo(() => transformProtocolData(protocolBreakdowns), [protocolBreakdowns]);
 
-  // Fetch real portfolio data and calculate claimable interest
-  const fetchRealPortfolioData = async () => {
-    // If we have pre-calculated breakdowns, use them instead of fetching
-    if (protocolBreakdowns && Object.keys(protocolBreakdowns).length > 0) {
-      console.log("📊 Using pre-calculated protocol breakdowns:", protocolBreakdowns);
-
-      const tableData: TableTypeRowSelection[] = [];
-
-      // Convert pre-calculated breakdowns to table format
-      Object.entries(protocolBreakdowns).forEach(([key, breakdown]: [string, any]) => {
-        if (breakdown.supplied > 0 || breakdown.interest > 0) {
-          const protocolName = key.charAt(0).toUpperCase() + key.slice(1);
-          const displayName = key === 'oneInch' ? '1inch' : protocolName;
-
-          const config = protocolsConfig.find(p =>
-            p.name.toLowerCase().includes(key.toLowerCase()) ||
-            (key === 'oneInch' && p.name.toLowerCase().includes('1inch'))
-          );
-
-          if (config) {
-            // Create default tokens based on protocol
-            const tokens = key === 'uniswap' ? [
-              { id: "1", symbol: "ETH", color: "secondary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png" },
-              { id: "2", symbol: "WISE", color: "primary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x66a0f676479cee1d7373f3dc2e2952778bff5bd6/logo.png" }
-            ] : [
-              { id: "1", symbol: "USDS", color: "primary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdc035d45d973e3ec169d2276ddab16f1e407384f/logo.png" },
-              { id: "2", symbol: "ETH", color: "secondary", icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png" }
-            ];
-
-            tableData.push({
-              logo: config.logo,
-              protocol: displayName === 'Uniswap' ? 'Uniswap V4' : displayName,
-              chain: config.chain,
-              protocolIcon: config.icon,
-              tokens: tokens,
-              apy: breakdown.supplied > 0 ?
-                `${((breakdown.interest / breakdown.supplied) * 100).toFixed(1)}%` : '0.0%',
-              supplied: breakdown.supplied < 100 ?
-                `$${breakdown.supplied.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
-                `$${breakdown.supplied.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-              claimableInterest: breakdown.interest < 100 ?
-                `$${breakdown.interest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
-                `$${breakdown.interest.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
-              status: breakdown.interest > 0 ? "Active" : "No Profit",
-              statuscolor: breakdown.interest > 0 ? "success" : "warning"
-            });
-          }
-        }
-      });
-
-      console.log("📊 Generated table data:", tableData);
-      setData(tableData);
-      setLoading(false);
-      return;
-    }
-    if (!account || !isConnected) {
-      console.log("No wallet connected, using fallback data");
-      setData(basicTableData);
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const walletAddress = account;
-      const currentChainId = chainId || 1; // Default to Ethereum mainnet
-
-      // Get protocol card values (exact same data source as cards)
-      const protocolCardData = await fetchPortfolioData(walletAddress, currentChainId);
-
-      // Get snapshot data for supplied amounts only
-      const snapshotResponse = await fetch(`http://localhost:5003/proxy?url=https://api.1inch.dev/portfolio/portfolio/v5.0/protocols/snapshot?addresses=${walletAddress}&chain_id=${currentChainId}`);
-      const snapshotData = await snapshotResponse.json();
-
-      if (snapshotData.result && protocolCardData) {
-        const protocols = snapshotData.result || [];
-
-        console.log('🎯 Using EXACT same data as protocol cards:', protocolCardData);
-
-        // Define the specific protocols we want to show (matching the cards)
-        const targetProtocols = ['pendle', 'aave', 'curve', 'spark', 'uniswap', '1inch', 'oneinch'];
-
-        // Filter to only show our target protocols that have positions > $0
-        // Exclude Uniswap V2 specifically
-        const relevantProtocols = protocols.filter((protocol: any) => {
-          const protocolGroupName = protocol.protocol_group_name?.toLowerCase() || '';
-          const protocolGroupId = protocol.protocol_group_id?.toLowerCase() || '';
-
-          // Exclude Uniswap V2 specifically
-          if (protocolGroupName.includes('uniswap v2') || protocolGroupName.includes('uniswap_v2')) {
-            console.log(`🚫 Excluding ${protocol.protocol_group_name} from table`);
-            return false;
-          }
-
-          return protocol.value_usd > 0 && targetProtocols.some(target =>
-            protocolGroupName.includes(target) || protocolGroupId.includes(target)
-          );
-        });
-
-        const realData = relevantProtocols.map((protocol: any) => {
-          const protocolName = protocol.protocol_group_name;
-
-          console.log(`=== ${protocolName} Simple Calculation ===`);
-
-          // Step 1: Get EXACT value from protocol cards
-          let currentValue = 0;
-          if (protocolName.toLowerCase().includes('spark')) {
-            currentValue = protocolCardData.sparkValue;
-          } else if (protocolName.toLowerCase().includes('aave')) {
-            currentValue = protocolCardData.aaveValue;
-          } else if (protocolName.toLowerCase().includes('curve')) {
-            currentValue = protocolCardData.curveValue;
-          } else if (protocolName.toLowerCase().includes('uniswap')) {
-            currentValue = protocolCardData.uniswapValue;
-          } else if (protocolName.toLowerCase().includes('pendle')) {
-            currentValue = protocolCardData.pendleValue;
-          } else if (protocolName.toLowerCase().includes('1inch')) {
-            currentValue = protocolCardData.oneInchValue;
-          }
-
-          if (currentValue === 0) {
-            console.log(`❌ ${protocolName} has $0 value - skipping`);
-            return null;
-          }
-
-          console.log('🎯 Protocol Card Value:', currentValue);
-          console.log('🎯 This is the EXACT value shown in the card above');
-
-          // Step 2: Get SUPPLIED AMOUNT from snapshot API (underlying tokens only)
-          const stablecoins = ['usds', 'usdc', 'usdt', 'dai', 'busd', 'frax', 'usdp', 'tusd', 'usdn'];
-
-          const suppliedAmount = (protocol.underlying_tokens || []).reduce((sum: number, token: any) => {
-            const tokenSymbol = (token.symbol || '').toLowerCase();
-            const isStablecoin = stablecoins.some(stable => tokenSymbol.includes(stable));
-
-            if (isStablecoin) {
-              // For stablecoins, use 1:1 conversion (amount * 1.0) - same as modal
-              const tokenValue = token.amount || 0;
-              console.log(`📋 Token ${token.symbol} (stablecoin): ${token.amount} = $${tokenValue}`);
-              return sum + tokenValue;
-            } else {
-              // For non-stablecoins, use the API's value_usd - same as modal
-              const tokenValue = token.value_usd || 0;
-              console.log(`📋 Token ${token.symbol} (non-stablecoin): value_usd = $${tokenValue}`);
-              return sum + tokenValue;
-            }
-          }, 0);
-
-          console.log('📋 Supplied Amount (from snapshot tokens):', suppliedAmount);
-
-          // Step 3: Calculate Interest from actual reward tokens (same as modal)
-          const claimableInterest = (protocol.reward_tokens || []).reduce((sum: number, token: any) => {
-            return sum + (token.value_usd || 0);
-          }, 0);
-
-          const roi = suppliedAmount > 0 ? (claimableInterest / suppliedAmount) * 100 : 0;
-
-          console.log('💰 Reward Tokens Interest Calculation for', protocolName);
-          console.log('  Protocol Card Value:', currentValue);
-          console.log('  Supplied Amount:', suppliedAmount);
-          console.log('  Raw reward_tokens:', protocol.reward_tokens);
-          console.log('  Interest = Sum of reward_tokens.value_usd');
-          console.log('  Interest =', claimableInterest, '(from reward tokens)');
-
-          console.log(`✅ ${protocolName} Final Results:`, {
-            currentValue: '$' + currentValue.toFixed(0),
-            suppliedAmount: '$' + suppliedAmount.toFixed(0),
-            claimableInterest: '$' + claimableInterest.toFixed(0),
-            roi: roi.toFixed(1) + '%'
-          });
-
-          // Get protocol config for UI elements (handle version suffixes like V2, V3, V4)
-          const protocolConfig = protocolsConfig.find(config => {
-            const configName = config.name.toLowerCase();
-            const protocolNameLower = protocolName.toLowerCase();
-
-            // Direct match
-            if (configName === protocolNameLower) return true;
-
-            // Handle version suffixes (e.g., "Aave V3" matches "Aave")
-            if (protocolNameLower.includes(configName) || configName.includes(protocolNameLower)) {
-              return true;
-            }
-
-            // Handle specific cases
-            if (protocolNameLower.includes('aave') && configName.includes('aave')) return true;
-            if (protocolNameLower.includes('pendle') && configName.includes('pendle')) return true;
-            if (protocolNameLower.includes('uniswap') && configName.includes('uniswap')) return true;
-            if (protocolNameLower.includes('curve') && configName.includes('curve')) return true;
-            if (protocolNameLower.includes('spark') && configName.includes('spark')) return true;
-            if (protocolNameLower.includes('1inch') && configName.includes('1inch')) return true;
-
-            return false;
-          });
-
-          if (protocolConfig) {
-            console.log(`✅ ${protocolName} matched to config: ${protocolConfig.name} - Logo: ${protocolConfig.logo}`);
-          } else {
-            console.log(`❌ ${protocolName} - NO MATCH FOUND - Will use placeholder`);
-          }
-
-          return {
-            logo: protocolConfig?.logo || "https://via.placeholder.com/32",
-            protocol: protocolName,
-            chain: "Ethereum",
-            protocolIcon: protocolConfig?.icon || "solar:chart-bold-duotone",
-            tokens: (protocolName.toLowerCase().includes('aave') || protocolConfig?.name?.toLowerCase().includes('aave')) ? [
-              {
-                id: "1",
-                symbol: "USDC",
-                color: "primary",
-                icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
-              },
-              {
-                id: "2",
-                symbol: "ETH",
-                color: "secondary",
-                icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png",
-              },
-            ] : (protocolName.toLowerCase().includes('spark') || protocolConfig?.name?.toLowerCase().includes('spark')) ? [
-              {
-                id: "1",
-                symbol: "DAI",
-                color: "warning",
-                icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
-              },
-              {
-                id: "2",
-                symbol: "ETH",
-                color: "secondary",
-                icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png",
-              },
-            ] : [
-              {
-                id: "1",
-                symbol: "ETH",
-                color: "primary",
-                icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png",
-              }
-            ],
-            apy: `${roi.toFixed(1)}%`,
-            supplied: `$${Math.max(0, suppliedAmount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-            currentValue: `$${currentValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-            claimableInterest: `$${Math.max(0, claimableInterest).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-            status: claimableInterest > 0 ? "Active" : "No Profit",
-            statuscolor: claimableInterest > 0 ? "success" : "warning"
-          };
-        });
-
-        // Filter out null entries (protocols not found in current API)
-        const validData = realData.filter((item: any) => item !== null) as TableTypeRowSelection[];
-
-        console.log('🔄 Before grouping - Found', validData.length, 'protocol entries');
-        validData.forEach((p: any) => {
-          console.log(`  ${p.protocol}: Supplied ${p.supplied}, Interest ${p.claimableInterest}`);
-        });
-
-        // Group by protocol and sum supplied amounts
-        const groupedData = validData.reduce((acc: any, item: any) => {
-          const protocolKey = item.protocol.toLowerCase();
-
-          if (!acc[protocolKey]) {
-            // First entry for this protocol - use protocol card value
-            let protocolCardValue = 0;
-            if (protocolKey.includes('spark')) {
-              protocolCardValue = protocolCardData.sparkValue;
-            } else if (protocolKey.includes('aave')) {
-              protocolCardValue = protocolCardData.aaveValue;
-            } else if (protocolKey.includes('curve')) {
-              protocolCardValue = protocolCardData.curveValue;
-            } else if (protocolKey.includes('uniswap')) {
-              protocolCardValue = protocolCardData.uniswapValue;
-            } else if (protocolKey.includes('pendle')) {
-              protocolCardValue = protocolCardData.pendleValue;
-            } else if (protocolKey.includes('1inch')) {
-              protocolCardValue = protocolCardData.oneInchValue;
-            }
-
-            acc[protocolKey] = {
-              ...item,
-              suppliedAmountRaw: 0, // Track raw number for summing
-              currentValueRaw: protocolCardValue, // Use protocol card value
-              claimableInterestRaw: 0 // Track raw interest for summing
-            };
-          }
-
-          // Sum the supplied amounts and claimable interest (parse back from formatted string)
-          const suppliedAmount = parseFloat(item.supplied.replace(/[$,]/g, ''));
-          const claimableAmount = parseFloat(item.claimableInterest.replace(/[$,]/g, ''));
-
-          if (protocolKey.includes('uniswap')) {
-            console.log(`🔍 Adding to ${protocolKey}:`, {
-              suppliedAmount,
-              claimableAmount,
-              prevSuppliedRaw: acc[protocolKey].suppliedAmountRaw,
-              prevClaimableRaw: acc[protocolKey].claimableInterestRaw
-            });
-          }
-
-          acc[protocolKey].suppliedAmountRaw += suppliedAmount;
-          acc[protocolKey].claimableInterestRaw += claimableAmount;
-
-          return acc;
-        }, {});
-
-        // Convert grouped data back to array and recalculate values
-        const consolidatedData = Object.values(groupedData).map((item: any) => {
-          const currentValue = item.currentValueRaw;
-          const totalSupplied = item.suppliedAmountRaw;
-          const interest = item.claimableInterestRaw; // Use the already calculated reward tokens sum
-          const roi = totalSupplied > 0 ? (interest / totalSupplied) * 100 : 0;
-
-          console.log(`🎯 ${item.protocol} CONSOLIDATED:`);
-          console.log(`  Protocol Card Value: $${currentValue.toLocaleString()}`);
-          console.log(`  Total Supplied: $${totalSupplied.toLocaleString()}`);
-          console.log(`  Interest (from claimableInterestRaw): $${interest.toLocaleString()}`);
-          console.log(`  Raw claimableInterestRaw value:`, item.claimableInterestRaw);
-
-          return {
-            ...item,
-            supplied: totalSupplied < 100 ?
-              `$${totalSupplied.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
-              `$${Math.max(0, totalSupplied).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-            currentValue: `$${currentValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-            claimableInterest: interest < 100 ?
-              `$${interest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` :
-              `$${Math.max(0, interest).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-            apy: `${roi.toFixed(1)}%`,
-            status: interest > 0 ? "Active" : "No Profit",
-            statuscolor: interest > 0 ? "success" : "warning"
-          };
-        });
-
-        console.log('✅ After consolidation - Final', consolidatedData.length, 'unique protocols');
-        consolidatedData.forEach((p: any) => {
-          console.log(`  ${p.protocol}: Supplied ${p.supplied} + Interest ${p.claimableInterest} = Total ${p.currentValue}`);
-        });
-
-        // Set the consolidated data
-        setData(consolidatedData);
-      }
-    } catch (error) {
-      console.error("Error fetching protocol snapshot data:", error);
-      // Show empty table if API fails - no mock data
-      console.warn("Failed to fetch real protocol data. Connect a wallet with DeFi positions to see actual supplied amounts and interest.");
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (account && isConnected) {
-      fetchRealPortfolioData();
-    } else if (!account || !isConnected) {
-      setData(basicTableData);
-    }
-  }, [account, isConnected, chainId, protocolBreakdowns]);
-
-  // Calculate totals from real data
-  const totals = data.reduce((acc, row) => {
-    const supplied = parseFloat(row.supplied?.replace(/[$,]/g, '') || '0');
-    const claimable = parseFloat(row.claimableInterest?.replace(/[$,]/g, '') || '0');
-    return {
-      totalSupplied: acc.totalSupplied + supplied,
-      totalClaimable: acc.totalClaimable + claimable
-    };
-  }, { totalSupplied: 0, totalClaimable: 0 });
+  // Calculate totals from data
+  const totals = useMemo(() => {
+    return data.reduce((acc, row) => {
+      const supplied = parseFloat(row.supplied?.replace(/[$,]/g, '') || '0');
+      const claimable = parseFloat(row.claimableInterest?.replace(/[$,]/g, '') || '0');
+      return {
+        totalSupplied: acc.totalSupplied + supplied,
+        totalClaimable: acc.totalClaimable + claimable
+      };
+    }, { totalSupplied: 0, totalClaimable: 0 });
+  }, [data]);
 
   // Calculate average APY
-  const avgAPY = data.length > 0
-    ? (data.reduce((acc, row) => acc + parseFloat(row.apy?.replace('%', '') || '0'), 0) / data.length).toFixed(1)
-    : '0.0';
+  const avgAPY = useMemo(() => {
+    return data.length > 0
+      ? (data.reduce((acc, row) => acc + parseFloat(row.apy?.replace('%', '') || '0'), 0) / data.length).toFixed(1)
+      : '0.0';
+  }, [data]);
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      rowSelection,
-    },
   });
+
+  // Show empty state if no data
+  if (!data || data.length === 0) {
+    return (
+      <CardBox>
+        <div className="text-center py-12">
+          <Icon icon="solar:chart-square-linear" className="mx-auto mb-4 text-gray-400" height={48} />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Protocol Data</h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            Protocol breakdown data is required to display the revenue forecast chart.
+          </p>
+        </div>
+      </CardBox>
+    );
+  }
 
   return (
     <>
       <CardBox>
-        <div className="md:flex justify-between items-center">
-          <div>
-            <h5 className="card-title">Interest</h5>
-          </div>
-            </div>
-        <div className="border border-ld rounded-md overflow-hidden mb-6">
-          <div className="overflow-x-auto">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="ml-3 text-gray-600">Loading PnL and claimable interest data...</span>
-            </div>
-            ) : (
-            <table className="min-w-full">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        className={`text-base text-ld font-semibold text-left border-b border-ld p-2`}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody className="divide-y divide-border dark:divide-darkborder">
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className={`whitespace-nowrap text-sm p-2`}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            )}
+        <div className="flex justify-between items-center mb-4">
+          <h5 className="text-xl font-semibold">Revenue Forecast</h5>
+          <div className="flex items-center gap-2">
+            <Icon icon="solar:chart-2-bold-duotone" className="text-primary" height={20} />
+            <span className="text-sm text-gray-500">{data.length} Protocols</span>
           </div>
         </div>
-        <div className="flex md:flex-row flex-col gap-3">
+        
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th key={header.id} className="text-left py-3 px-2 font-medium text-sm">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className="border-t border-gray-100 dark:border-gray-700">
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="py-3 px-2">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        
+        <div className="flex md:flex-row flex-col gap-3 mt-6">
           <div className="md:basis-1/3 basis-full">
             <div className="flex gap-3 items-center">
               <span className="h-12 w-12 flex-shrink-0 flex items-center justify-center bg-muted dark:bg-dark rounded-tw">
