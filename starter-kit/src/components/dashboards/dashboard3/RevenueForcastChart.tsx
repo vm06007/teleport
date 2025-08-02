@@ -194,13 +194,13 @@ const transformProtocolData = (
                             const tokenAPYs = breakdown.tokens
                                 .map((token: any) => parseFloat(token.apy))
                                 .filter((apy: number) => !isNaN(apy) && apy > 0);
-                            
+
                             if (tokenAPYs.length > 0) {
                                 const averageAPY = tokenAPYs.reduce((sum: number, apy: number) => sum + apy, 0) / tokenAPYs.length;
                                 return `${averageAPY.toFixed(1)}%`;
                             }
                         }
-                        
+
                         // Fallback to calculated APY
                         return breakdown.supplied > 0 ?
                             `${((breakdown.interest / breakdown.supplied) * 100).toFixed(1)}%` : '0.0%';
@@ -395,13 +395,7 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
         <>
             <br></br>
             <CardBox>
-                <div className="flex justify-between items-center mb-4 mt-4">
-                    <h5 className="text-xl font-semibold">Revenue Breakdown</h5>
-                    <div className="flex items-center gap-2">
-                        <Icon icon="solar:chart-2-bold-duotone" className="text-primary" height={20} />
-                        <span className="text-sm text-gray-500">{data.length} Protocols</span>
-                    </div>
-                </div>
+
 
                 <div className="overflow-x-auto">
                     <table className="w-full">
