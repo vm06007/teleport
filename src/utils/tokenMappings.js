@@ -12,7 +12,9 @@ export const TOKEN_ADDRESSES = {
         UNI: "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984",
         AAVE: "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
         MATIC: "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0",
-        ETH: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" // Native ETH
+        ETH: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", // Native ETH
+        WPOL: "0x0000000000000000000000000000000000000000", // Placeholder for WPOL
+        eETH: "0x0000000000000000000000000000000000000000" // Placeholder for eETH
     },
     // Polygon (Chain ID: 137)
     137: {
@@ -66,7 +68,9 @@ export const STANDARD_TOKEN_PRICES = {
     ARB: 1.80,
     MANA: 0.85,
     REVV: 0.15,
-    ICE: 0.02
+    ICE: 0.02,
+    WPOL: 0.00, // Added WPOL price
+    eETH: 0.00 // Added eETH price
 };
 
 // Get price for a token based on its symbol
@@ -102,9 +106,9 @@ export const TOKEN_METADATA = {
         apyRange: { min: 4, max: 8 }
     },
     USDT: {
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+        icon: "https://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/512/Tether-USDT-icon.png",
         name: "Tether USD",
-        symbol: "USDT", 
+        symbol: "USDT",
         apyRange: { min: 4, max: 8 }
     },
     DAI: {
@@ -114,7 +118,7 @@ export const TOKEN_METADATA = {
         apyRange: { min: 4, max: 8 }
     },
     USDS: {
-        icon: "https://assets.coingecko.com/coins/images/39926/standard/usds.webp?1726666683",
+        icon: "https://assets.coingecko.com/coins/images/39926/standard/usds.webp",
         name: "USDS Stablecoin",
         symbol: "USDS",
         apyRange: { min: 4, max: 8 }
@@ -129,6 +133,24 @@ export const TOKEN_METADATA = {
         icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
         name: "Ethereum",
         symbol: "ETH",
+        apyRange: { min: 2, max: 12 }
+    },
+    WBTC: {
+        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
+        name: "Wrapped Bitcoin",
+        symbol: "WBTC",
+        apyRange: { min: 1, max: 8 }
+    },
+    WPOL: {
+        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png",
+        name: "Wrapped Polygon",
+        symbol: "WPOL",
+        apyRange: { min: 3, max: 10 }
+    },
+    eETH: {
+        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png",
+        name: "Ethereum",
+        symbol: "eETH",
         apyRange: { min: 2, max: 12 }
     }
 };

@@ -45,7 +45,7 @@ import Bitpay from "../assets/images/sectionProtocols/bitPay.svg";
 export const sectionChainsContent = {
     title: "",
     ITEMS: [
-        { logo: EthImg, name: "Ethereum" },
+        { logo: EthImg, name: "Multichain" },
         { logo: BscImg, name: "BNB Chain" },
         { logo: PolygonImg, name: "Polygon" },
         { logo: OptimismImg, name: "Optimism" },

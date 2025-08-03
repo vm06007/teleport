@@ -1,7 +1,7 @@
 export const NETWORKS = {
     ethereum: {
         chainId: 1,
-        name: "Ethereum",
+        name: "Multichain",
         shortName: "ETH",
         icon: "⟠",
         color: "#627EEA",
