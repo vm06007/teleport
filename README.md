@@ -64,8 +64,28 @@ Aave → 1inch Teleport → Compound (1 transaction)
 - **⚡ Single Transaction**: Complex multi-protocol operations in one atomic transaction
 - **💰 Cost Efficient**: Reduced gas fees and transaction costs
 - **🛡️ Risk Mitigation**: No MEV attacks or failed intermediate transactions
-- **🌉 Cross-Protocol**: Seamlessly move between Aave, Compound, Uniswap, and more
+- **🌉 Cross-Protocol**: Seamlessly move between Aave, Compound, Uniswap, Spark, and more
 - **🔒 Atomic Execution**: All-or-nothing transaction execution
+- **📦 Bulk Operations**: Collect interest and withdraw liquidity from multiple protocols simultaneously
+- **🎯 Smart Batching**: Automatically optimize transaction batching for maximum efficiency
+
+### 🚀 **Revolutionary Bulk Operations**
+
+**Traditional DeFi Management:**
+```
+Spark → Collect Interest → Uniswap → Collect Fees → Aave → Collect Rewards (3 separate transactions)
+```
+
+**With 1inch Teleport:**
+```
+Collect All Interest & Fees → Single Transaction (1 atomic operation)
+```
+
+**Key Bulk Features:**
+- **🔄 Bulk Interest Collection**: Collect from multiple protocols in one click
+- **💧 Bulk Liquidity Withdrawal**: Withdraw from all active positions simultaneously
+- **📊 Multi-Position Management**: Select and manage multiple Uniswap V4 positions at once
+- **🎯 Cross-Protocol Aggregation**: View and act on all protocols from a single dashboard
 
 ---
 
@@ -165,11 +185,45 @@ bun run dev
 - **GitHub Integration**: Direct link to project repository
 
 ### 🎯 Main App Features
-- **Multi-Protocol Portfolio**: Track positions across Aave, Compound, Uniswap, etc.
-- **Real-Time Data**: Live updates from 1inch API
+- **Multi-Protocol Portfolio**: Track positions across Aave, Compound, Uniswap, Spark, Pendle, Curve, and 1inch
+- **Real-Time Data**: Live updates from 1inch API and protocol integrations
 - **Cross-Chain Support**: Ethereum, Polygon, Arbitrum
-- **Wallet Integration**: Connect multiple wallets
+- **Wallet Integration**: Connect multiple wallets with secure Web3 integration
 - **Advanced Analytics**: Portfolio performance and risk metrics
+
+#### 🚀 **Bulk Operations - The Game Changer**
+
+**Collect Interest/Rewards in Bulk**
+- **Single-Click Collection**: Collect interest from multiple protocols simultaneously
+- **Cross-Protocol Aggregation**: Combine rewards from Spark, Uniswap V4, and other protocols
+- **Total Claimable**: View aggregated claimable interest across all active positions
+- **Smart Batching**: Automatically batch transactions to minimize gas costs
+
+**Withdraw Liquidity in Bulk**
+- **Multi-Position Withdrawal**: Withdraw liquidity from multiple positions at once
+- **Cross-Protocol Liquidity Management**: Move funds between Aave, Uniswap, Spark, and other protocols
+- **Total Supplied Overview**: Track total liquidity across all protocols
+- **Atomic Operations**: Execute complex multi-protocol withdrawals in single transactions
+
+#### 📊 **Portfolio Dashboard Features**
+- **Protocol Overview Cards**: Visual representation of each protocol with current values
+- **Active Position Tracking**: Real-time monitoring of Spark and Uniswap V4 positions
+- **APY Performance**: Track average APY across all protocols
+- **Interest Accumulation**: Monitor claimable interest growth across all protocols
+- **Position Selection**: Select specific positions for targeted actions
+
+#### 🎯 **Uniswap V4 Integration**
+- **Position Management**: View and manage individual Uniswap V4 positions
+- **Fee Collection**: Collect accumulated fees from all position pairs
+- **Bulk Fee Collection**: Collect fees from multiple positions simultaneously
+- **Liquidity Withdrawal**: Withdraw liquidity from selected positions in batch operations
+- **Position Analytics**: Track fees available per position
+
+#### 🔄 **Cross-Protocol Workflows**
+- **Interest Collection**: Collect from multiple protocols in one transaction
+- **Liquidity Withdrawal**: Withdraw from all active positions simultaneously
+- **Protocol Migration**: Move funds between protocols efficiently
+- **Risk Management**: Diversify across multiple protocols while maintaining single-point control
 
 ---
 
