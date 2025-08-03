@@ -76,7 +76,7 @@ export const getTokenPrice = (symbol: string): number => {
 };
 
 // Check if an address is the native currency for a given chain
-export const isNativeCurrency = (address: string, chainId: number): boolean => {
+export const isNativeCurrency = (address: string): boolean => {
     return address.toLowerCase() === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 };
 

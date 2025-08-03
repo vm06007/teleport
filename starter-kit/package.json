@@ -44,6 +44,7 @@
     "@iconify/react": "^5.1.0",
     "@types/aos": "^3.0.7",
     "@types/chance": "^1.1.6",
+    "@types/lodash": "^4.17.20",
     "@types/lowlight": "^0.0.7",
     "@types/node": "20.10.5",
     "@types/react": "^18.3.12",

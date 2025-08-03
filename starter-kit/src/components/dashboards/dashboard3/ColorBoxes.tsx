@@ -199,7 +199,7 @@ const ColorBoxes = () => {
 
         try {
             console.log('Collecting interest from:', protocol.title);
-            await collectInterest(account);
+            await collectInterest();
         } catch (error) {
             console.error('Error collecting interest:', error);
         }
@@ -210,7 +210,7 @@ const ColorBoxes = () => {
 
         try {
             console.log('Exiting position from:', protocol.title);
-            await exitPosition(account);
+            await exitPosition();
         } catch (error) {
             console.error('Error exiting position:', error);
         }
@@ -224,7 +224,7 @@ const ColorBoxes = () => {
             console.log('🔍 Fetching Uniswap positions...');
 
             // Fetch real Uniswap V4 positions from mainnet
-            const positions = await fetchUserUniswapPositions(account);
+            const positions = await fetchUserUniswapPositions();
             console.log(`🎯 Found ${positions.length} real Uniswap V4 positions with fees/liquidity`);
 
             setUniswapPositions(positions);
@@ -264,7 +264,7 @@ const ColorBoxes = () => {
 
         try {
             console.log('Collecting fees from selected positions:', selectedPositionData);
-            await collectUniswapFees(account, selectedPositionData);
+            await collectUniswapFees(selectedPositionData);
         } catch (error) {
             console.error('Error collecting Uniswap fees:', error);
         }

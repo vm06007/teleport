@@ -1,6 +1,3 @@
-import { readContract } from 'wagmi/actions';
-import { wagmiConfig } from '../config/wagmi';
-
 /**
  * Uniswap V4 Position Service
  * 
@@ -10,10 +7,6 @@ import { wagmiConfig } from '../config/wagmi';
 
 // Uniswap V4 PositionManager (mainnet)
 const POSITION_MANAGER_ADDRESS = '0xbd216513d74c8cf14cf4747e6aaa6420ff64ee9e';
-
-
-
-
 
 // Minimal ABI for V4 fee collection
 const POSITION_MANAGER_ABI = [
@@ -34,8 +27,6 @@ const POSITION_MANAGER_ABI = [
     }
 ] as const;
 
-
-
 export interface UniswapPosition {
     tokenId: string;
     poolKey: {
@@ -55,7 +46,7 @@ export interface UniswapPosition {
     feesUSD?: number;
 }
 
-// Token symbols mapping for common tokens
+// Token symbols mapping for common tokens (used for reference)
 const TOKEN_SYMBOLS: { [address: string]: string } = {
     '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2': 'WETH',
     '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48': 'USDC',
@@ -64,17 +55,10 @@ const TOKEN_SYMBOLS: { [address: string]: string } = {
     '0x0000000000000000000000000000000000000000': 'ETH',
 };
 
-function getTokenSymbol(address: string): string {
-    return TOKEN_SYMBOLS[address] || `Token(${address.slice(0, 6)}...)`;
-}
+// Export for potential future use
+export { TOKEN_SYMBOLS };
 
-
-
-
-
-
-
-export async function fetchUserUniswapPositions(userAddress: string): Promise<UniswapPosition[]> {
+export async function fetchUserUniswapPositions(): Promise<UniswapPosition[]> {
     console.log('🔍 Fetching your Uniswap V4 positions for PayoutFlux integration');
     
     // Position data configured for batch fee collection

@@ -4,8 +4,6 @@ import { Navbar } from "flowbite-react";
 import Search from "./Search";
 import { Icon } from "@iconify/react";
 import AppLinks from "./AppLinks";
-import Notifications from "./Notifications";
-import Profile from "./Profile";
 import WalletConnection from "./WalletConnection";
 import FullLogo from "../../shared/logo/FullLogo";
 import MobileHeaderItems from "./MobileHeaderItems";

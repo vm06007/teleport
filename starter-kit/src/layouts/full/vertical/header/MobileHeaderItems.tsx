@@ -1,7 +1,6 @@
 
 import { Icon } from "@iconify/react";
 import Notifications from "./Notifications";
-import Profile from "./Profile";
 
 import { Navbar } from "flowbite-react";
 import AppLinks from "./AppLinks";

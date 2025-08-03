@@ -6,14 +6,7 @@ import { Badge } from 'flowbite-react';
 import { useWallet } from 'src/hooks/useWallet';
 import { fetchWalletTokens, fetchProtocolPositions, ProtocolPosition } from 'src/services/portfolioService';
 
-// Ethereum provider interface
-declare global {
-    interface Window {
-        ethereum?: {
-            request: (args: { method: string; params?: any[] }) => Promise<any>;
-        };
-    }
-}
+// Ethereum provider interface is already declared in useWallet.ts
 
 // Types for our liquidity management
 interface TokenPosition {

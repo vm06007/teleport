@@ -4,17 +4,6 @@ import { KanbanDataContextProvider } from "src/context/kanbancontext";
 // import BreadcrumbComp from "src/layouts/full/shared/breadcrumb/BreadcrumbComp";
 import LiquidityManager from "src/components/liquidity/LiquidityManager";
 
-
-const BCrumb = [
-    {
-        to: "/",
-        title: "Home",
-    },
-    {
-        title: "Kanban",
-    },
-];
-
 function kanban() {
     return (
         <>
