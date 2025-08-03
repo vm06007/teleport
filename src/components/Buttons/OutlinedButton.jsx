@@ -8,7 +8,8 @@ const OutlinedButton = ({ sx = {}, arrow, children, fit, ...props }) => {
     
     const handleClick = () => {
         if (children === "Try Demo") {
-            navigate("/teleport");
+            // Open the deployed Vercel app in a new tab
+            window.open("https://teleport-djm2.vercel.app/", "_blank");
         }
         // Call the original onClick if provided
         if (props.onClick) {
