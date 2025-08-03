@@ -77,7 +77,7 @@ export const fetchSpotPrices = async (tokenAddresses, chainId = 137, tokenDetail
         console.log("Making spot prices API call to:", apiUrl);
         console.log("Token addresses:", tokenAddresses);
         console.log("Chain ID:", chainId);
-        
+
         const response = await axios.get(PROXY_URL, {
             params: {
                 url: apiUrl
@@ -87,10 +87,10 @@ export const fetchSpotPrices = async (tokenAddresses, chainId = 137, tokenDetail
 
         // Convert prices using token symbols for consistency across networks
         const convertedPrices = {};
-        
+
         tokenAddresses.forEach(address => {
             const token = tokenDetails[address];
-            
+
             // Check if it's native currency
             if (isNativeCurrency(address, chainId)) {
                 const nativeSymbol = getNativeCurrencySymbol(chainId);
@@ -115,12 +115,12 @@ export const fetchSpotPrices = async (tokenAddresses, chainId = 137, tokenDetail
         console.error("Error fetching spot prices:", error);
         console.error("Error response:", error.response?.data);
         console.error("Error status:", error.response?.status);
-        
+
         // Fallback: use symbol-based pricing
         const prices = {};
         tokenAddresses.forEach(address => {
             const token = tokenDetails[address];
-            
+
             if (isNativeCurrency(address, chainId)) {
                 const nativeSymbol = getNativeCurrencySymbol(chainId);
                 prices[address] = getTokenPrice(nativeSymbol);
@@ -130,7 +130,7 @@ export const fetchSpotPrices = async (tokenAddresses, chainId = 137, tokenDetail
                 prices[address] = 0.01;
             }
         });
-        
+
         return prices;
     }
 };

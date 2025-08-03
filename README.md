@@ -134,7 +134,7 @@ The application uses a proxy server to handle API requests. Configure the proxy 
 
 3. For production, update the URL to point to your proxy server:
    ```bash
-   VITE_PROXY_URL=https://your-proxy-server.com/proxy
+   VITE_PROXY_URL=https://proxy-lion-app-naii8.ondigitalocean.app/proxy
    ```
 
 #### Environment Variables
