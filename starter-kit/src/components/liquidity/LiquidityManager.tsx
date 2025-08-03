@@ -323,12 +323,23 @@ const LiquidityManager = () => {
                 sourceColumn: sourceColumn.id
             });
 
-            // Add suggested tokens to empty protocol columns
-            if (sourceColumn.type === 'wallet') {
-                const walletTokens = sourceColumn.tokens;
+            // Add suggested tokens to empty protocol columns (for any drag source)
+            // Collect all available tokens (from wallet and all protocols)
+            const allAvailableTokens: TokenPosition[] = [];
+            
+            columns.forEach(col => {
+                col.tokens.filter(t => !t.isSuggested).forEach(token => {
+                    // Avoid duplicates by checking symbol
+                    if (!allAvailableTokens.find(t => t.symbol === token.symbol)) {
+                        allAvailableTokens.push(token);
+                    }
+                });
+            });
+
+            if (allAvailableTokens.length > 0) {
                 const updatedColumns = columns.map(col => {
                     if (col.type === 'protocol' && col.tokens.filter(t => !t.isSuggested).length === 0) {
-                        const suggestedTokens = generateSuggestedTokens(walletTokens, col.id);
+                        const suggestedTokens = generateSuggestedTokens(allAvailableTokens, col.id);
                         return {
                             ...col,
                             tokens: [...col.tokens.filter(t => !t.isSuggested), ...suggestedTokens]
