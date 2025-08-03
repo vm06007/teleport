@@ -65,12 +65,12 @@ contract UniswapV4FeeCollector is Ownable, IERC721Receiver {
             params[actionIndex] = abi.encode(pos.tokenId, 0, 0, 0, "");
 
             actions[actionIndex + 1] = bytes1(uint8(Actions.TAKE_PAIR));
-            Currency currency0 = CurrencyLibrary.wrap(pos.token0);
-            Currency currency1 = CurrencyLibrary.wrap(pos.token1);
+            Currency currency0 = Currency.wrap(pos.token0);
+            Currency currency1 = Currency.wrap(pos.token1);
             params[actionIndex + 1] = abi.encode(currency0, currency1, pos.recipient);
         }
 
-        positionManager.modifyLiquidities(abi.encode(actions, params));
+        positionManager.modifyLiquidities(abi.encode(actions, params), block.timestamp + 300);
     }
 
     /**
@@ -110,17 +110,17 @@ contract UniswapV4FeeCollector is Ownable, IERC721Receiver {
             // --- Action 2: TAKE_PAIR ---
             // Transfers the withdrawn liquidity and fees to the recipient.
             actions[actionIndex + 1] = bytes1(uint8(Actions.TAKE_PAIR));
-            Currency currency0 = CurrencyLibrary.wrap(pos.token0);
-            Currency currency1 = CurrencyLibrary.wrap(pos.token1);
+            Currency currency0 = Currency.wrap(pos.token0);
+            Currency currency1 = Currency.wrap(pos.token1);
             params[actionIndex + 1] = abi.encode(currency0, currency1, pos.recipient);
 
             // --- Action 3: BURN ---
             // Burns the position NFT, as it is now empty.
-            actions[actionIndex + 2] = bytes1(uint8(Actions.BURN));
+            actions[actionIndex + 2] = bytes1(uint8(Actions.BURN_POSITION));
             params[actionIndex + 2] = abi.encode(pos.tokenId);
         }
 
-        positionManager.modifyLiquidities(abi.encode(actions, params));
+        positionManager.modifyLiquidities(abi.encode(actions, params), block.timestamp + 300);
     }
 
 
