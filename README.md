@@ -1,126 +1,385 @@
-# Teleport Portfolio
+# 🚀 1inch Teleport - Cross-Protocol DeFi Solution
 
-A Web3 portfolio tracker that displays your tokens and DeFi positions across multiple protocols using the 1inch API.
+<div align="center">
 
-## Setup
+![1inch Teleport](https://img.shields.io/badge/1inch-Teleport-purple?style=for-the-badge&logo=ethereum)
+![React](https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.5.4-blue?style=for-the-badge&logo=typescript)
+![Vite](https://img.shields.io/badge/Vite-5.4.11-purple?style=for-the-badge&logo=vite)
 
-### 1. Install Dependencies
+**Unified DeFi Portfolio Management Across Multiple Protocols**
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-View%20Now-green?style=for-the-badge)](https://teleport-pearl.vercel.app)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/vm06007/teleport/)
+
+</div>
+
+---
+
+## 📁 Project Structure
+
+This repository contains **two distinct applications**:
+
+### 🏠 **Landing Page** (`/src` folder)
+- **Location**: Root `/src` directory
+- **Purpose**: Marketing landing page explaining the 1inch Teleport solution
+- **URL**: `http://localhost:5173/` (root)
+- **Features**: 
+  - Product overview and features
+  - Cross-protocol solution explanation
+  - Supported protocols showcase
+  - Smooth scrolling navigation
+
+### 🎯 **Main DeFi App** (`/starter-kit` folder)
+- **Location**: `/starter-kit` directory  
+- **Purpose**: Full-featured DeFi portfolio management application
+- **URL**: `http://localhost:5174/` (separate dev server)
+- **Features**:
+  - Multi-protocol portfolio tracking
+  - Real-time DeFi position monitoring
+  - Cross-chain liquidity management
+  - 1inch API integration
+
+---
+
+## 🎯 What is 1inch Teleport?
+
+**1inch Teleport** is a revolutionary cross-protocol DeFi solution that simplifies complex multi-step transactions into **single atomic operations**. 
+
+### 🔄 Cross-Protocol Operations Made Simple
+
+Traditional DeFi operations often require multiple transactions across different protocols:
+
+```
+Aave → Repay Debt → Withdraw Collateral → 1inch Swap → Compound Deposit
+```
+
+**With 1inch Teleport, this becomes:**
+```
+Aave → 1inch Teleport → Compound (1 transaction)
+```
+
+### 🚀 Key Benefits
+
+- **⚡ Single Transaction**: Complex multi-protocol operations in one atomic transaction
+- **💰 Cost Efficient**: Reduced gas fees and transaction costs
+- **🛡️ Risk Mitigation**: No MEV attacks or failed intermediate transactions
+- **🌉 Cross-Protocol**: Seamlessly move between Aave, Compound, Uniswap, and more
+- **🔒 Atomic Execution**: All-or-nothing transaction execution
+
+---
+
+## 🏗️ Architecture Overview
+
+```mermaid
+graph TB
+    A[User Wallet] --> B[1inch Teleport]
+    B --> C[Aave Protocol]
+    B --> D[Compound Protocol] 
+    B --> E[Uniswap Protocol]
+    B --> F[Other DeFi Protocols]
+    
+    C --> G[Repay Debt]
+    C --> H[Withdraw Collateral]
+    D --> I[Deposit Assets]
+    D --> J[Borrow Assets]
+    E --> K[Swap Tokens]
+    
+    G --> L[Single Atomic Transaction]
+    H --> L
+    I --> L
+    J --> L
+    K --> L
+```
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Node.js** (v18 or higher)
+- **Bun** (recommended) or **npm**
+- **1inch API Key** ([Get one here](https://portal.1inch.dev/))
+
+### 1. Clone the Repository
 ```bash
-npm install
-# or
+git clone https://github.com/vm06007/teleport.git
+cd teleport
+```
+
+### 2. Install Dependencies
+
+#### For Landing Page (Root)
+```bash
 bun install
 ```
 
-### 2. Configure 1inch API Key
-
-You need a 1inch API key to fetch portfolio data:
-
-1. Get your API key from https://portal.1inch.dev/
-2. Create a `.env.local` file in the project root:
-   ```
-   VITE_ONEINCH_API_KEY=your_api_key_here
-   ```
-
-### 3. Start the Application
-
-Start both the proxy server and the development server:
-
+#### For Main App (Starter Kit)
 ```bash
-# Terminal 1: Start the proxy server with API key
-VITE_ONEINCH_API_KEY=your_api_key_here node src/services/proxy.js
-
-# Or if you have the .env.local file set up:
-node src/services/proxy.js
-
-# Terminal 2: Start the Vite dev server
-npm run dev
+cd starter-kit
+bun install
 ```
 
-Visit http://localhost:5173/teleport to view your portfolio.
+### 3. Configure Environment Variables
 
-### How the Proxy Server Works
+Create `.env.local` in the root directory:
+```env
+VITE_ONEINCH_API_KEY=your_1inch_api_key_here
+```
 
-The application uses a proxy server to handle API calls to the 1inch API. This approach:
+### 4. Start the Applications
 
-- **Handles CORS**: Prevents cross-origin request issues
-- **Secures API keys**: Keeps your API key on the server side
-- **Adds authentication**: Automatically adds the `Bearer` token to requests
-- **Provides logging**: Shows detailed request/response information
+#### Option A: Run Both Simultaneously
 
-**Proxy Server Details:**
-- **Port**: 5003 (http://localhost:5003)
-- **Endpoint**: `/proxy?url=<1inch_api_url>`
-- **Environment Variable**: `VITE_ONEINCH_API_KEY`
-- **Authorization**: Automatically adds `Bearer <api_key>` header
-
-**Important Notes:**
-- The proxy server must be running on port 5003 for the API calls to work
-- Make sure to replace `your_api_key_here` with your actual 1inch API key
-- The proxy server handles CORS and adds the proper Authorization headers
-- If you see "Unauthorized" errors, check that your API key is correct
-
-## Features
-
-- View token balances across multiple networks
-- Track DeFi positions in Aave, Compound, Uniswap, and more
-- Switch between Ethereum, Polygon, and Arbitrum networks
-- Real-time portfolio value tracking
-- Multi-wallet support
-
-## Testing the API
-
-Run the test script to verify your API key is working:
-
+**Terminal 1 - Landing Page:**
 ```bash
+# From root directory
+bun run dev
+# Access at: http://localhost:5173/
+```
+
+**Terminal 2 - Main App:**
+```bash
+# From root directory
+cd starter-kit
+bun run dev
+# Access at: http://localhost:5174/
+```
+
+#### Option B: Run Main App Only
+```bash
+cd starter-kit
+bun run dev
+# Access at: http://localhost:5174/
+```
+
+---
+
+## 📱 Application Features
+
+### 🏠 Landing Page Features
+- **Smooth Scrolling Navigation**: Jump to any section instantly
+- **Cross-Protocol Explanation**: Visual diagrams of complex DeFi operations
+- **Supported Protocols**: Showcase of integrated DeFi protocols
+- **Responsive Design**: Works perfectly on all devices
+- **GitHub Integration**: Direct link to project repository
+
+### 🎯 Main App Features
+- **Multi-Protocol Portfolio**: Track positions across Aave, Compound, Uniswap, etc.
+- **Real-Time Data**: Live updates from 1inch API
+- **Cross-Chain Support**: Ethereum, Polygon, Arbitrum
+- **Wallet Integration**: Connect multiple wallets
+- **Advanced Analytics**: Portfolio performance and risk metrics
+
+---
+
+## 🔧 Technical Stack
+
+### Landing Page (`/src`)
+- **Frontend**: React 18 + Material-UI
+- **Styling**: CSS3 with custom animations
+- **Build Tool**: Vite
+- **Package Manager**: Bun
+
+### Main App (`/starter-kit`)
+- **Frontend**: React 19 + TypeScript
+- **UI Framework**: Flowbite React + Tailwind CSS
+- **Web3**: Wagmi + Viem
+- **Charts**: ApexCharts
+- **State Management**: React Query
+- **Build Tool**: Vite + TypeScript
+
+---
+
+## 🌐 API Integration
+
+### 1inch API Setup
+The application uses the 1inch API for cross-protocol operations:
+
+```javascript
+// Example API call
+const response = await fetch(`/proxy?url=${encodeURIComponent(apiUrl)}`, {
+  headers: {
+    'Authorization': `Bearer ${apiKey}`
+  }
+});
+```
+
+### Supported Protocols
+- **Lending**: Aave, Compound, Spark
+- **DEX**: Uniswap, Curve, 1inch
+- **Yield**: Yearn Finance, Convex
+- **Cross-Chain**: Polygon, Arbitrum, BSC
+
+---
+
+## 🎨 Cross-Protocol Flow Examples
+
+### Example 1: Aave to Compound Migration
+```mermaid
+sequenceDiagram
+    participant User
+    participant Aave
+    participant Teleport
+    participant Compound
+    
+    User->>Teleport: Initiate migration
+    Teleport->>Aave: Repay debt + withdraw
+    Teleport->>Compound: Deposit + borrow
+    Teleport->>User: Complete in 1 transaction
+```
+
+### Example 2: Flash Loan Arbitrage
+```mermaid
+sequenceDiagram
+    participant User
+    participant Protocol A
+    participant Protocol B
+    participant Teleport
+    
+    User->>Teleport: Take flash loan
+    Teleport->>Protocol A: Repay borrow
+    Teleport->>Protocol A: Withdraw liquidity
+    Teleport->>Protocol B: Lend liquidity
+    Teleport->>Protocol B: Borrow again
+    Teleport->>User: Return flash loan
+```
+
+---
+
+## 🛠️ Development
+
+### Project Structure
+```
+teleport/
+├── src/                    # Landing page
+│   ├── components/        # React components
+│   ├── containers/        # Page sections
+│   ├── utils/            # Utilities and content
+│   └── assets/           # Images and static files
+├── starter-kit/           # Main DeFi application
+│   ├── src/
+│   │   ├── views/        # Page components
+│   │   ├── layouts/      # Layout components
+│   │   ├── components/   # Reusable components
+│   │   └── config/       # Configuration files
+│   └── package.json
+├── server.js             # Proxy server
+└── package.json          # Root dependencies
+```
+
+### Available Scripts
+
+#### Root (Landing Page)
+```bash
+bun run dev          # Start development server
+bun run build        # Build for production
+bun run preview      # Preview production build
+bun run server       # Start proxy server
+```
+
+#### Starter Kit (Main App)
+```bash
+cd starter-kit
+bun run dev          # Start development server
+bun run build        # Build for production
+bun run lint         # Run ESLint
+```
+
+---
+
+## 🧪 Testing
+
+### API Testing
+```bash
+# Test 1inch API connection
 node test-1inch-api.js
+
+# Test all protocols
+node test-all-protocols.js
+
+# Test specific protocols
+node test-aave-api.js
+node test-uniswap-positions.js
 ```
 
-## Troubleshooting
+### Browser Testing
+```bash
+# Test API endpoints
+open test-api.html
+```
 
-### Common Issues
+---
 
-**Unauthorized errors (401)**
-- Make sure your API key is set correctly in the `.env.local` file
-- Verify the API key is valid at https://portal.1inch.dev/
-- Check that the proxy server is using the correct environment variable: `VITE_ONEINCH_API_KEY`
+## 🚀 Deployment
 
-**Proxy server not starting**
-- Ensure you have the correct API key
-- Check that port 5003 is not already in use: `lsof -i :5003`
-- Kill any existing proxy processes: `pkill -f "node src/services/proxy.js"`
+### Landing Page
+```bash
+bun run build
+# Deploy dist/ folder to your hosting service
+```
 
-**API calls failing (500 errors)**
-- Restart the proxy server with the correct API key
-- Check the proxy server logs for detailed error messages
-- Verify the API key has the correct permissions
+### Main App
+```bash
+cd starter-kit
+bun run build
+# Deploy dist/ folder to your hosting service
+```
 
-**No positions showing**
-- Ensure you're on the correct network (mainnet vs polygon)
-- Connect your wallet to the application
-- Check that your wallet has tokens on the selected network
+### Environment Variables for Production
+```env
+VITE_ONEINCH_API_KEY=your_production_api_key
+VITE_NETWORK=mainnet
+VITE_CHAIN_ID=1
+```
 
-**CORS errors**
-- The proxy server handles CORS automatically
-- Make sure the proxy server is running on http://localhost:5003
-- Check that the frontend is making requests to the correct proxy URL
+---
 
-### Debug Steps
+## 🤝 Contributing
 
-1. **Test the API directly:**
-   ```bash
-   curl "http://localhost:5003/proxy?url=https://api.1inch.dev/balance/v1.2/137/balances/0x1234567890123456789012345678901234567890"
-   ```
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
 
-2. **Check proxy server logs:**
-   The proxy server will log all requests and errors when running
+### Development Guidelines
+- Follow TypeScript best practices
+- Use 4-space indentation
+- Write meaningful commit messages
+- Test all changes thoroughly
+- Update documentation as needed
 
-3. **Verify environment variables:**
-   ```bash
-   echo $VITE_ONEINCH_API_KEY
-   ```
+---
 
-4. **Test with the provided test script:**
-   ```bash
-   node test-1inch-api.js
-   ```
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **1inch Team** for the amazing cross-protocol solution
+- **Ethereum Community** for the DeFi ecosystem
+- **React Team** for the excellent framework
+- **Vite Team** for the fast build tool
+
+---
+
+## 📞 Support
+
+- **GitHub Issues**: [Report bugs or request features](https://github.com/vm06007/teleport/issues)
+- **Documentation**: [Read the docs](https://github.com/vm06007/teleport#readme)
+- **Live Demo**: [Try the application](https://teleport-pearl.vercel.app)
+
+---
+
+<div align="center">
+
+**Made with ❤️ by the Cross-Protocol Solutions Team**
+
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/vm06007/teleport/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-View%20Now-green?style=for-the-badge)](https://teleport-pearl.vercel.app)
+
+</div>
