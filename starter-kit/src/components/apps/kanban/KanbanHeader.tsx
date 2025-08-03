@@ -10,9 +10,9 @@ function KanbanHeader() {
     const [show, setShow] = useState(false);
     const [listName, setListName] = useState('');
 
-    //Closes the modal 
+    //Closes the modal
     const handleClose = () => setShow(false);
-    //open the modal 
+    //open the modal
     const handleShow = () => setShow(true);
 
     //Handles Add a new category.

@@ -1,5 +1,4 @@
 
-import TaskManager from "src/components/apps/kanban/TaskManager";
 import CardBox from "src/components/shared/CardBox";
 import { KanbanDataContextProvider } from "src/context/kanbancontext";
 // import BreadcrumbComp from "src/layouts/full/shared/breadcrumb/BreadcrumbComp";
@@ -26,9 +25,6 @@ function kanban() {
                         <LiquidityManager />
                     </CardBox>
                 </div>
-                <CardBox>
-                    <TaskManager />
-                </CardBox>
             </KanbanDataContextProvider>
         </>
     )
