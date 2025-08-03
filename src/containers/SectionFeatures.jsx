@@ -8,7 +8,7 @@ const { title, ITEMS } = sectionFeaturesContent;
 
 const SectionFeatures = () => {
     return (
-        <Container sx={{ mt: { xs: 10, md: 20, lg: 25 } }}>
+        <Container id="product-features" sx={{ mt: { xs: 10, md: 20, lg: 25 } }}>
             <Title variant={{ xs: "h3", md: "h2" }} sx={{ mb: { xs: 5, md: 5 } }}>
                 {title}
             </Title>

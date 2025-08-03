@@ -124,7 +124,7 @@ const SectionMain = () => {
                         variant={{ xs: "h4", sm: "h3", md: "h2" }}
                         sx={{ fontWeight: 500, letterSpacing: "0.05em", mt: 2 }}
                     >
-                        Teleport Between Protocols
+                        Cross-Protocol Solutions
                     </Title>
 
                     <Stack

@@ -7,7 +7,7 @@ const { title, ITEMS } = SectionProtocolsContent;
 
 const SectionProtocols = () => {
     return (
-        <Container sx={{ mb: { xs: 0, md: 0, lg: 0 }, mt: { xs: 5, md: 10, lg: 15 } }}>
+        <Container id="supported-protocols" sx={{ mb: { xs: 0, md: 0, lg: 0 }, mt: { xs: 5, md: 10, lg: 15 } }}>
             <Title variant={{ xs: "h3", md: "h2" }} sx={{ mb: { xs: 5, md: 8 } }}>
                 {title}
             </Title>

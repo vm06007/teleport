@@ -8,7 +8,7 @@ const { title, subtitle, ITEMS } = sectionBehindContent;
 
 const SectionBehind = () => {
     return (
-        <Container sx={{ mt: { xs: 10, md: 10, lg: 10 } }}>
+        <Container id="behind-the-scenes" sx={{ mt: { xs: 10, md: 10, lg: 10 } }}>
             <Title variant={{ xs: "h3", md: "h2" }} sx={{ mb: 2 }}>
                 {title}
             </Title>

@@ -35,6 +35,16 @@ const LinkButton = ({ children, ...props }) => (
 const Navbar = () => {
     const scrollPosition = useScrollPosition();
 
+    const smoothScrollTo = (elementId) => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            });
+        }
+    };
+
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
 
@@ -74,19 +84,19 @@ const Navbar = () => {
                             sx={{ flex: 1 }}
                             flexWrap="wrap"
                         >
-                            <LinkButton>
+                            <LinkButton onClick={() => smoothScrollTo('product-features')}>
                                 <Typography variant="body2">Product Features</Typography>
                             </LinkButton>
-                            <LinkButton>
+                            <LinkButton onClick={() => smoothScrollTo('unite-liquidity')}>
                                 <Typography variant="body2">Unite Liquidity</Typography>
                             </LinkButton>
-                            <LinkButton>
+                            <LinkButton onClick={() => smoothScrollTo('behind-the-scenes')}>
                                 <Typography variant="body2">Behind The Scenes</Typography>
                             </LinkButton>
-                            <LinkButton>
+                            <LinkButton onClick={() => smoothScrollTo('supported-protocols')}>
                                 <Typography variant="body2">Supported Protocols</Typography>
                             </LinkButton>
-                            <LinkButton spacing={0.5}>
+                            <LinkButton spacing={0.5} onClick={() => window.open('https://github.com/vm06007/teleport/', '_blank')}>
                                 <Typography variant="body2">Project Repository</Typography>
                                 <CallMadeIcon sx={{ fontSize: 12 }} />
                             </LinkButton>
