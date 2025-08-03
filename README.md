@@ -147,18 +147,46 @@ Create `.env.local` in the root directory:
 VITE_ONEINCH_API_KEY=your_1inch_api_key_here
 ```
 
-### 4. Start the Applications
+### 4. Set Up Proxy Server for 1inch API
+
+The application uses a proxy server to handle 1inch API calls securely. Follow these steps:
+
+#### Option A: Using Environment Variable (Recommended)
+```bash
+# Create .env file in root directory
+echo "ONEINCH_API_KEY=your_api_key_here" > .env
+```
+
+#### Option B: Direct API Key Setup
+Edit `server.js` line 9:
+```javascript
+const API_KEY = process.env.ONEINCH_API_KEY || "your_actual_api_key_here";
+```
+
+#### Option C: Command Line
+```bash
+ONEINCH_API_KEY=your_api_key_here node server.js
+```
+
+### 5. Start the Applications
 
 #### Option A: Run Both Simultaneously
 
-**Terminal 1 - Landing Page:**
+**Terminal 1 - Proxy Server:**
+```bash
+# From root directory
+node server.js
+# Proxy server runs on: http://localhost:5003
+```
+
+**Terminal 2 - Landing Page:**
 ```bash
 # From root directory
 bun run dev
 # Access at: http://localhost:5173/
 ```
 
-**Terminal 2 - Main App:**
+**Terminal 3 - Main App:**
 ```bash
 # From root directory
 cd starter-kit
@@ -172,6 +200,8 @@ cd starter-kit
 bun run dev
 # Access at: http://localhost:5174/
 ```
+
+**Note**: The main app requires the proxy server to be running for 1inch API functionality.
 
 ---
 
@@ -386,6 +416,56 @@ VITE_ONEINCH_API_KEY=your_production_api_key
 VITE_NETWORK=mainnet
 VITE_CHAIN_ID=1
 ```
+
+---
+
+## 🔧 API Testing & Troubleshooting
+
+### Testing 1inch API Connection
+```bash
+# Test basic API connection
+node test-1inch-api.js
+
+# Test all protocols
+node test-all-protocols.js
+
+# Test specific protocols
+node test-aave-api.js
+node test-uniswap-positions.js
+node test-spark-protocol.js
+```
+
+### Proxy Server Troubleshooting
+
+**Common Issues:**
+- **"Unauthorized" errors**: Check your API key is set correctly
+- **Proxy server not responding**: Ensure it's running on port 5003
+- **CORS errors**: Verify the proxy server is running before starting the app
+- **Rate limiting**: 1inch API has rate limits, avoid rapid requests
+
+**Debug Steps:**
+1. Check proxy server is running: `http://localhost:5003`
+2. Verify API key in browser console
+3. Test API endpoints directly
+4. Check network tab for failed requests
+
+### API Integration Details
+
+The proxy server (`server.js`) handles all 1inch API calls:
+```javascript
+// Example API call through proxy
+const response = await fetch(`/proxy?url=${encodeURIComponent(apiUrl)}`, {
+  headers: {
+    'Authorization': `Bearer ${apiKey}`
+  }
+});
+```
+
+**Supported Endpoints:**
+- Portfolio positions across protocols
+- Token swaps and quotes
+- Liquidity pool data
+- Cross-protocol operations
 
 ---
 
