@@ -6,6 +6,15 @@ import { Badge } from 'flowbite-react';
 import { useWallet } from 'src/hooks/useWallet';
 import { fetchWalletTokens, fetchProtocolPositions, ProtocolPosition } from 'src/services/portfolioService';
 
+// Ethereum provider interface
+declare global {
+    interface Window {
+        ethereum?: {
+            request: (args: { method: string; params?: any[] }) => Promise<any>;
+        };
+    }
+}
+
 // Types for our liquidity management
 interface TokenPosition {
     id: string;
@@ -114,13 +123,22 @@ const LiquidityManager = () => {
         draggedToken?: TokenPosition;
         sourceColumn?: string;
     }>({ isDragging: false });
+    
+    const [isProcessingTransaction, setIsProcessingTransaction] = useState(false);
+    const [originalColumns, setOriginalColumns] = useState<LiquidityColumn[]>([]);
+    const [pendingChanges, setPendingChanges] = useState<Array<{
+        token: TokenPosition;
+        sourceColumn: string;
+        destinationColumn: string;
+        action: string;
+    }>>([]);
 
     // Initialize columns with wallet and protocols
     const initializeColumns = async () => {
         if (!account) return;
 
         setLoading(true);
-                try {
+        try {
             // Fetch both wallet tokens and protocol positions in parallel
             const [walletTokens, protocolPositions] = await Promise.all([
                 fetchWalletTokens(account, chainId || 1),
@@ -253,7 +271,7 @@ const LiquidityManager = () => {
                         icon: config.icon,
                         color: config.color,
                         tokens: [], // Empty by default, suggestions shown only during drag
-                        protocolAddress: '0x0000000000000000000000000000000000000000'
+                    protocolAddress: '0x0000000000000000000000000000000000000000'
                     });
                 }
             });
@@ -273,7 +291,9 @@ const LiquidityManager = () => {
             });
 
             setColumns(sortedColumns);
+            setOriginalColumns(sortedColumns); // Store original state
             setDataLoaded(true);
+            setPendingChanges([]); // Clear any pending changes
             console.log('Data loaded successfully. Columns:', initialColumns.length);
         } catch (error) {
             console.error('Error initializing liquidity columns:', error);
@@ -292,6 +312,7 @@ const LiquidityManager = () => {
     const handleRefresh = () => {
         setRefreshing(true);
         setDataLoaded(false);
+        setPendingChanges([]); // Clear pending changes on refresh
         initializeColumns();
     };
 
@@ -299,6 +320,7 @@ const LiquidityManager = () => {
     useEffect(() => {
         setDataLoaded(false);
         setColumns([]);
+        setPendingChanges([]); // Clear pending changes when account changes
     }, [account]);
 
     useEffect(() => {
@@ -368,37 +390,130 @@ const LiquidityManager = () => {
             }));
 
             // If no valid destination, just return cleaned columns
-            if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
+        if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
                 return cleanedColumns;
-            }
+        }
 
-            const sourceColumnId = source.droppableId;
-            const destinationColumnId = destination.droppableId;
+        const sourceColumnId = source.droppableId;
+        const destinationColumnId = destination.droppableId;
 
-            console.log(`🔄 Moving token ${draggableId} from ${sourceColumnId} to ${destinationColumnId}`);
+        console.log(`🔄 Moving token ${draggableId} from ${sourceColumnId} to ${destinationColumnId}`);
 
-            // Create new columns state with the moved token
+        // Create new columns state with the moved token
             const newColumns = [...cleanedColumns];
             const sourceColumn = newColumns.find(col => col.id === sourceColumnId);
             const destinationColumn = newColumns.find(col => col.id === destinationColumnId);
 
             if (!sourceColumn || !destinationColumn) return cleanedColumns;
 
-            // Remove token from source
+            // Get token to move
             const tokenToMove = sourceColumn.tokens[source.index];
             if (!tokenToMove) return cleanedColumns;
 
+            // Remove token from source
             sourceColumn.tokens.splice(source.index, 1);
 
             // Add token to destination
             destinationColumn.tokens.splice(destination.index, 0, tokenToMove);
 
-            // Execute actual blockchain transaction
-            handleLiquidityMove(tokenToMove, sourceColumn, destinationColumn);
+            // Track this change
+            const action = getTransactionAction(sourceColumn, destinationColumn);
+            setPendingChanges(prev => [...prev, {
+                token: tokenToMove,
+                sourceColumn: sourceColumn.name,
+                destinationColumn: destinationColumn.name,
+                action: action
+            }]);
+
+            console.log(`📝 Tracked change: ${action} ${tokenToMove.symbol} from ${sourceColumn.name} to ${destinationColumn.name}`);
 
             return newColumns;
         });
     };
+
+    // Handle confirming all pending changes
+    const handleConfirmChanges = async () => {
+        if (pendingChanges.length === 0 || isProcessingTransaction) return;
+
+        try {
+            setIsProcessingTransaction(true);
+            
+            // Create summary message for signature
+            const changesCount = pendingChanges.length;
+            const message = `Approve ${changesCount} liquidity movement${changesCount > 1 ? 's' : ''}:\n${pendingChanges.map(change => 
+                `${change.action} ${change.token.symbol} from ${change.sourceColumn} to ${change.destinationColumn}`
+            ).join('\n')}`;
+            
+            // Request user signature for all changes
+            await requestUserSignature(message);
+            
+            // Execute all pending transactions
+            for (const change of pendingChanges) {
+                const sourceCol = originalColumns.find(col => col.name === change.sourceColumn);
+                const destCol = originalColumns.find(col => col.name === change.destinationColumn);
+                if (sourceCol && destCol) {
+                    await handleLiquidityMove(change.token, sourceCol, destCol);
+                }
+            }
+            
+            // Update original state to current state
+            setOriginalColumns([...columns]);
+            setPendingChanges([]);
+            
+            console.log(`✅ Confirmed ${changesCount} changes`);
+            
+        } catch (error) {
+            console.error('Failed to confirm changes:', error);
+            // Keep pending changes if signature was rejected
+        } finally {
+            setIsProcessingTransaction(false);
+        }
+    };
+
+    // Handle resetting all pending changes
+    const handleResetChanges = () => {
+        setColumns([...originalColumns]);
+        setPendingChanges([]);
+        console.log('🔄 Reset all pending changes');
+    };
+
+    // Request user signature for the transaction
+    const requestUserSignature = async (message: string) => {
+        if (!window.ethereum) {
+            throw new Error('No wallet connected');
+        }
+        
+        console.log('Requesting signature for:', message);
+        
+        try {
+            const signature = await window.ethereum.request({
+                method: 'personal_sign',
+                params: [message, account],
+            });
+            
+            console.log('User signature received:', signature);
+            return signature;
+        } catch (error) {
+            console.error('User rejected signature:', error);
+            throw new Error('Transaction signature required');
+        }
+    };
+
+
+
+    // Get transaction action description
+    const getTransactionAction = (sourceColumn: LiquidityColumn, destinationColumn: LiquidityColumn) => {
+        if (sourceColumn.type === 'wallet' && destinationColumn.type === 'protocol') {
+            return 'deposit';
+        } else if (sourceColumn.type === 'protocol' && destinationColumn.type === 'wallet') {
+            return 'withdrawal';
+        } else if (sourceColumn.type === 'protocol' && destinationColumn.type === 'protocol') {
+            return 'transfer';
+        }
+        return 'transaction';
+    };
+
+
 
     // Handle actual liquidity moves (deposits/withdrawals)
     const handleLiquidityMove = async (token: TokenPosition, sourceColumn: LiquidityColumn, destinationColumn: LiquidityColumn) => {
@@ -466,21 +581,51 @@ const LiquidityManager = () => {
             )}
             <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Liquidity Manager</h2>
-                    <p className="text-gray-600 dark:text-gray-400">Drag and drop tokens between your wallet and protocols</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Liquidity Manager</h2>
+                <p className="text-gray-600 dark:text-gray-400">Drag and drop tokens between your wallet and protocols</p>
                 </div>
-                <button
-                    onClick={handleRefresh}
-                    disabled={refreshing}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors"
-                    title="Refresh data"
-                >
-                    <Icon
-                        icon="solar:refresh-bold-duotone"
-                        className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`}
-                    />
-                    {refreshing ? 'Refreshing...' : 'Refresh'}
-                </button>
+                                <div className="flex items-center gap-3">
+                    {/* Confirm/Reset buttons when there are pending changes */}
+                    {pendingChanges.length > 0 && (
+                        <>
+                            <button
+                                onClick={handleResetChanges}
+                                disabled={isProcessingTransaction}
+                                className="flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+                                title="Reset all changes"
+                            >
+                                <Icon icon="solar:refresh-circle-bold-duotone" className="h-5 w-5" />
+                                Reset ({pendingChanges.length})
+                            </button>
+                            <button
+                                onClick={handleConfirmChanges}
+                                disabled={isProcessingTransaction}
+                                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-lg transition-colors"
+                                title="Confirm all changes"
+                            >
+                                <Icon 
+                                    icon="solar:check-circle-bold-duotone" 
+                                    className={`h-5 w-5 ${isProcessingTransaction ? 'animate-pulse' : ''}`} 
+                                />
+                                {isProcessingTransaction ? 'Confirming...' : `Confirm (${pendingChanges.length})`}
+                            </button>
+                        </>
+                    )}
+                    
+                    {/* Refresh button */}
+                    <button
+                        onClick={handleRefresh}
+                        disabled={refreshing || isProcessingTransaction}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors"
+                        title="Refresh data"
+                    >
+                        <Icon 
+                            icon="solar:refresh-bold-duotone" 
+                            className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} 
+                        />
+                        {refreshing ? 'Refreshing...' : 'Refresh'}
+                    </button>
+                </div>
             </div>
 
             <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
@@ -571,14 +716,14 @@ const LiquidityManager = () => {
                                                 ))}
                                                 {provided.placeholder}
 
-                                                                                {/* Empty State */}
-                                {walletColumn.tokens.length === 0 && (
-                                    <div className="text-center py-8 text-gray-400 dark:text-gray-500">
-                                        <Icon icon="solar:inbox-line-bold-duotone" height={32} className="mx-auto mb-2" />
+                                                {/* Empty State */}
+                                                {walletColumn.tokens.length === 0 && (
+                                                    <div className="text-center py-8 text-gray-400 dark:text-gray-500">
+                                                        <Icon icon="solar:inbox-line-bold-duotone" height={32} className="mx-auto mb-2" />
                                         <p className="text-sm">No tokens found</p>
                                         <p className="text-xs mt-1">Make sure your wallet has tokens with value</p>
-                                    </div>
-                                )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     )}
@@ -715,6 +860,16 @@ const LiquidityManager = () => {
                     </div>
                 </div>
             </DragDropContext>
+
+            {/* Processing Transaction Overlay */}
+            {isProcessingTransaction && (
+                <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center gap-3">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <span className="text-gray-700 dark:text-gray-300">Processing transaction...</span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
