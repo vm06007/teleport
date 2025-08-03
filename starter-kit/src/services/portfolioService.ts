@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const PROXY_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:5003/proxy";
+const PROXY_URL = import.meta.env.VITE_PROXY_URL || "https://proxy-lion-app-naii8.ondigitalocean.app/proxy";
 
 export interface PortfolioData {
     totalValue: number;
