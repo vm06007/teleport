@@ -3,7 +3,6 @@ import cors from "cors";
 import fetch from "node-fetch";
 
 const app = express();
-const port = 5003;
 const port = process.env.PORT || 5003;
 
 // Replace with your actual API key from https://portal.1inch.dev/
@@ -87,33 +86,65 @@ app.use((req, res) => {
     res.status(404).json({ error: "Endpoint not found" });
 });
 
-const server = app.listen(port, () => {
-    console.log(`Proxy server running on http://localhost:${port}`);
-    console.log(`Health check available at: http://localhost:${port}/health`);
-    console.log(`Root endpoint available at: http://localhost:${port}/`);
-    console.log(`Make sure to set your API key in the code or ONEINCH_API_KEY environment variable`);
-});
+// Start server with proper error handling
+const startServer = () => {
+    try {
+        const server = app.listen(port, '0.0.0.0', () => {
+            console.log(`Proxy server running on http://0.0.0.0:${port}`);
+            console.log(`Health check available at: http://0.0.0.0:${port}/health`);
+            console.log(`Root endpoint available at: http://0.0.0.0:${port}/`);
+            console.log(`Make sure to set your API key in the code or ONEINCH_API_KEY environment variable`);
+        });
 
-// Graceful shutdown handling
-process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully');
-    server.close(() => {
-        console.log('Process terminated');
-    });
-});
+        // Graceful shutdown handling
+        process.on('SIGTERM', () => {
+            console.log('SIGTERM received, shutting down gracefully');
+            server.close(() => {
+                console.log('Process terminated');
+                process.exit(0);
+            });
+        });
 
-process.on('SIGINT', () => {
-    console.log('SIGINT received, shutting down gracefully');
-    server.close(() => {
-        console.log('Process terminated');
-    });
-});
+        process.on('SIGINT', () => {
+            console.log('SIGINT received, shutting down gracefully');
+            server.close(() => {
+                console.log('Process terminated');
+                process.exit(0);
+            });
+        });
 
-// Keep the process alive
+        // Handle server errors
+        server.on('error', (error) => {
+            console.error('Server error:', error);
+            if (error.code === 'EADDRINUSE') {
+                console.error(`Port ${port} is already in use`);
+                process.exit(1);
+            } else {
+                console.error('Unknown server error:', error);
+                process.exit(1);
+            }
+        });
+
+        return server;
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+};
+
+// Keep the process alive and handle uncaught errors
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
+    // Don't exit immediately, let the server handle it
 });
 
 process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit immediately, let the server handle it
 });
+
+// Start the server
+const server = startServer();
+
+// Export for potential testing
+export { app, server };
