@@ -33,7 +33,7 @@ const Teleport = () => {
                     {
                         symbol: "USDT",
                         name: "Tether USD",
-                        logo: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+                        logo: "https://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/512/Tether-USDT-icon.png",
                         balance: "1890.30",
                         usdValue: 1890.30
                     }
@@ -99,7 +99,7 @@ const Teleport = () => {
             };
 
             window.ethereum.on('chainChanged', handleChainChanged);
-            
+
             // Check current network
             window.ethereum.request({ method: 'eth_chainId' }).then(chainId => {
                 handleChainChanged(chainId);
@@ -112,8 +112,8 @@ const Teleport = () => {
     }, []);
 
     return (
-        <Box sx={{ 
-            minHeight: '100vh', 
+        <Box sx={{
+            minHeight: '100vh',
             backgroundColor: '#0a0a0a',
             display: 'flex',
             flexDirection: 'column',
@@ -121,9 +121,9 @@ const Teleport = () => {
         }}>
             <Container maxWidth="lg" sx={{ flex: 1 }}>
                 {/* Header with title and controls */}
-                <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     mb: 4
                 }}>
@@ -158,7 +158,7 @@ const Teleport = () => {
                             onClose={handleNetworkClose}
                         >
                             {Object.values(NETWORKS).map((network) => (
-                                <MenuItem 
+                                <MenuItem
                                     key={network.chainId}
                                     onClick={() => handleNetworkSelect(network)}
                                     selected={network.chainId === selectedNetwork.chainId}
@@ -194,7 +194,7 @@ const Teleport = () => {
                                 <Chip
                                     icon={<AccountBalanceWalletIcon />}
                                     label={formatAddress(account)}
-                                    sx={{ 
+                                    sx={{
                                         borderColor: selectedNetwork.color,
                                         color: selectedNetwork.color
                                     }}
@@ -224,13 +224,13 @@ const Teleport = () => {
                     {isConnected ? (
                         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 3, alignItems: 'start' }}>
                             {/* User Portfolio - Leftmost column */}
-                            <UserPortfolio 
-                                address={account} 
+                            <UserPortfolio
+                                address={account}
                                 chainId={selectedNetwork.chainId}
                                 networkName={selectedNetwork.name}
                                 networkColor={selectedNetwork.color}
                             />
-                            
+
                             {/* Protocol Portfolios - Right columns */}
                             {protocols.map((protocol) => (
                                 <ProtocolPortfolio
@@ -260,8 +260,8 @@ const Teleport = () => {
                 </Box>
 
                 <Box sx={{ textAlign: 'center', mt: 4 }}>
-                    <Typography 
-                        variant="body2" 
+                    <Typography
+                        variant="body2"
                         sx={{ color: 'rgba(255,255,255,0.6)', cursor: 'pointer', textDecoration: 'underline' }}
                         onClick={() => navigate('/')}
                     >

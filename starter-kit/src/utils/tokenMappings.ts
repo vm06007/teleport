@@ -110,9 +110,9 @@ export const TOKEN_METADATA: { [key: string]: TokenMetadata } = {
         apyRange: { min: 4, max: 8 }
     },
     USDT: {
-        icon: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+        icon: "https://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/512/Tether-USDT-icon.png",
         name: "Tether USD",
-        symbol: "USDT", 
+        symbol: "USDT",
         apyRange: { min: 4, max: 8 }
     },
     DAI: {
@@ -145,7 +145,7 @@ export const TOKEN_METADATA: { [key: string]: TokenMetadata } = {
 export const getTokenMetadata = (symbol: string): TokenMetadata => {
     const normalizedSymbol = getNormalizedSymbol(symbol);
     return TOKEN_METADATA[normalizedSymbol] || {
-        icon: null,
+        icon: TOKEN_METADATA['DAI'].icon, // Use DAI icon as fallback
         name: symbol,
         symbol: symbol,
         apyRange: { min: 0, max: 5 }

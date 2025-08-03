@@ -64,9 +64,10 @@ const ColorBoxes = () => {
             setLoading(true);
 
             // Fetch both portfolio data and detailed breakdown
+            const proxyUrl = import.meta.env.VITE_PROXY_URL || "http://localhost:5003/proxy";
             const [portfolioData, snapshotResponse] = await Promise.all([
                 fetchPortfolioData(account, chainId),
-                fetch(`http://localhost:5003/proxy?url=https://api.1inch.dev/portfolio/portfolio/v5.0/protocols/snapshot?addresses=${account}&chain_id=${chainId}`)
+                fetch(`${proxyUrl}?url=https://api.1inch.dev/portfolio/portfolio/v5.0/protocols/snapshot?addresses=${account}&chain_id=${chainId}`)
                     .then(res => res.json())
             ]);
 

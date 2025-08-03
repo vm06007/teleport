@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const PROXY_URL = "http://localhost:5003/proxy";
+const PROXY_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:5003/proxy";
 
 export interface PortfolioData {
     totalValue: number;
@@ -68,6 +68,12 @@ export const fetchWalletTokens = async (address: string, chainId: number = 1): P
                 address: underlyingToken.address || tokenSnapshot.contract_address
             };
 
+            // Skip tokens that should not be displayed
+            if (shouldSkipToken(walletToken.symbol)) {
+                console.log(`Skipping wallet token ${walletToken.symbol} from display`);
+                continue;
+            }
+
             // Only include tokens with meaningful value (> $1)
             if (walletToken.valueUSD > 1) {
                 tokens.push(walletToken);
@@ -84,7 +90,7 @@ export const fetchWalletTokens = async (address: string, chainId: number = 1): P
 
     } catch (error) {
         console.error("Error fetching wallet tokens:", error);
-        
+
         // Return empty array if API fails
         console.warn("API failed, returning empty wallet tokens. Connect a wallet to see real data.");
         return [];
@@ -97,23 +103,23 @@ const TOKEN_ICON_MAP: { [key: string]: string } = {
     'ETH': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png',
     'BNB': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/binance/info/logo.png',
     'MATIC': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png',
-    
+
     // Major stablecoins
-    'USDT': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png',
+    'USDT': 'https://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/512/Tether-USDT-icon.png',
+    'WBTC': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png',
     'USDC': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png',
     'DAI': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png',
     'BUSD': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x4Fabb145d64652a948d72533023f6E7A623C7C53/logo.png',
     'USDS': 'https://assets.coingecko.com/coins/images/39926/standard/usds.webp',
-    
+
     // Major tokens
     'WETH': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
-    'WBTC': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png',
     'LINK': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x514910771AF9Ca656af840dFF83E8264EcF986CA/logo.png',
     'UNI': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984/logo.png',
     'AAVE': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9/logo.png',
     '1INCH': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x111111111117dC0aa78b770fA6A738034120C302/logo.png',
     'ENS': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC18360217d8f7ab5e7c516566761ea12ce7f9d72/logo.png',
-    
+
     // DeFi tokens
     'CRV': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xD533a949740bb3306d119CC777fa900bA034cd52/logo.png',
     'COMP': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xc00e94Cb662C3520282E6f5717214004A7f26888/logo.png',
@@ -122,7 +128,7 @@ const TOKEN_ICON_MAP: { [key: string]: string } = {
     'YFI': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e/logo.png',
     'SUSHI': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B3595068778DD592e39A122f4f5a5cF09C90fE2/logo.png',
     'PENDLE': 'https://cryptologos.cc/logos/pendle-pendle-logo.png?v=040',
-    
+
     // Other popular tokens
     'BAT': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x0D8775F648430679A709E98d2b0Cb6250d2887EF/logo.png',
     'ZRX': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xE41d2489571d322189246DafA5ebDe1F4699F498/logo.png',
@@ -130,7 +136,7 @@ const TOKEN_ICON_MAP: { [key: string]: string } = {
     'SAND': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x3845badAde8e6dFF049820680d1F14bD3903a5d0/logo.png',
     'APE': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x4d224452801ACEd8B2F0aebE155379bb5D594381/logo.png',
     'GRT': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xc944E90C64B2c07662A292be6244BDf05Cda44a7/logo.png',
-    
+
     // Stablecoin variants and newer tokens
     'FRAX': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x853d955aCEf822Db058eb8505911ED77F175b99e/logo.png',
     'LUSD': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x5f98805A4E8be255a32880FDeC7F6728C6568BA0/logo.png',
@@ -141,11 +147,15 @@ const TOKEN_ICON_MAP: { [key: string]: string } = {
     'USDP': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x8E870D67F660D95d5be530380D0eC0bd388289E1/logo.png',
     'GUSD': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd/logo.png',
     'SUSD': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x57Ab1E02fEE23774580C119740129eAC7081e9D3/logo.png',
-    
+
     // Missing tokens from common sets
     'SHIB': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE/logo.png',
     'PEPE': 'https://assets.coingecko.com/coins/images/29850/standard/pepe-token.jpeg',
     'FLOKI': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xcf0C122c6b73ff809C693DB761e7BaeBe62b6a2E/logo.png',
+
+    // Additional tokens for protocol table
+    'WPOL': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png', // Polygon icon for WPOL
+    'eETH': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png', // ETH icon for eETH
 };
 
 // Helper function to get token icon URL with multiple fallbacks
@@ -154,16 +164,16 @@ const getTokenIcon = (address: string, symbol: string): string => {
     if (address.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
         return TOKEN_ICON_MAP['ETH'];
     }
-    
+
     // Check symbol mapping first
     const symbolUpper = symbol?.toUpperCase();
     if (symbolUpper && TOKEN_ICON_MAP[symbolUpper]) {
         return TOKEN_ICON_MAP[symbolUpper];
     }
-    
+
     // Try address-specific mapping for special cases
     const addressLower = address.toLowerCase();
-    
+
     // Special mappings for tokens with different symbols or addresses
     const addressMappings: { [key: string]: string } = {
         '0xdac17f958d2ee523a2206206994597c13d831ec7': TOKEN_ICON_MAP['USDT'], // USDT
@@ -180,21 +190,30 @@ const getTokenIcon = (address: string, symbol: string): string => {
         // Add any specific token addresses from the user's wallet
         '0x3b484b82567a09e2588a13d54d032153f0c0aee0': TOKEN_ICON_MAP['IMUSD'], // IMUSD/lvlUSD
     };
-    
+
     if (addressMappings[addressLower]) {
         return addressMappings[addressLower];
     }
-    
+
     // Try TrustWallet assets with proper checksum address
     if (address && address.length === 42) {
         return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${address}/logo.png`;
     }
-    
-    // Ultimate fallback - a generic token icon
-    return 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png';
+
+    // Ultimate fallback - DAI icon for any token not found
+    return TOKEN_ICON_MAP['DAI'];
 };
 
-// Interface for protocol positions  
+// List of tokens to skip rendering in the protocol table
+const SKIP_TOKENS = ['fxVERSE', 'WPOL', 'USD0', 'slvlUSD', 'lvlUSD', 'eETH'];
+
+// Helper function to check if a token should be skipped
+const shouldSkipToken = (symbol: string): boolean => {
+    const symbolUpper = symbol?.toUpperCase();
+    return SKIP_TOKENS.includes(symbolUpper);
+};
+
+// Interface for protocol positions
 export interface ProtocolPosition {
     protocolId: string;
     protocolName: string;
@@ -221,7 +240,7 @@ export const fetchProtocolPositions = async (address: string, chainId: number = 
 
         // Group protocols by protocol_group_id
         const protocolGroups = new Map<string, any[]>();
-        
+
         protocolsData.forEach((protocol: any) => {
             const groupId = protocol.protocol_group_id;
             if (!protocolGroups.has(groupId)) {
@@ -236,7 +255,7 @@ export const fetchProtocolPositions = async (address: string, chainId: number = 
 
             const firstProtocol = protocols[0];
             const protocolName = firstProtocol.protocol_group_name;
-            
+
             // Skip if no significant value
             const totalValue = protocols.reduce((sum, p) => sum + (p.value_usd || 0), 0);
             if (totalValue < 1) continue;
@@ -251,14 +270,13 @@ export const fetchProtocolPositions = async (address: string, chainId: number = 
                 for (const token of underlyingTokens) {
                     if (token.amount > 0 && token.value_usd > 0) {
                         const tokenSymbol = token.symbol || 'UNKNOWN';
-                        
-                        // Exclude specific tokens from display
-                        const excludedTokens = ['USD0', 'slvlUSD'];
-                        if (excludedTokens.includes(tokenSymbol)) {
-                            console.log(`Excluding token ${tokenSymbol} from display`);
+
+                        // Skip tokens that should not be displayed
+                        if (shouldSkipToken(tokenSymbol)) {
+                            console.log(`Skipping token ${tokenSymbol} from display`);
                             continue;
                         }
-                        
+
                         tokens.push({
                             symbol: tokenSymbol,
                             name: token.name || token.symbol || 'Unknown Token',
@@ -270,7 +288,7 @@ export const fetchProtocolPositions = async (address: string, chainId: number = 
                         });
                     }
                 }
-                
+
                 // Note: Skipping reward_tokens to only show supplied tokens
             }
 
@@ -328,7 +346,7 @@ export const fetchPortfolioData = async (address: string, chainId: number = 1): 
         const calculateProtocolValue = (protocolNames: string[]) => {
             const matchingProtocols = protocols.filter((protocol: any) => {
                 const protocolName = protocol.protocol_group_name?.toLowerCase() || '';
-                return protocolNames.some(name => 
+                return protocolNames.some(name =>
                     protocolName.includes(name) || name.includes(protocolName)
                 );
             });
@@ -341,7 +359,7 @@ export const fetchPortfolioData = async (address: string, chainId: number = 1): 
                 const suppliedAmount = (protocol.underlying_tokens || []).reduce((sum: number, token: any) => {
                     const tokenSymbol = (token.symbol || '').toLowerCase();
                     const isStablecoin = stablecoins.some(stable => tokenSymbol.includes(stable));
-                    
+
                     if (isStablecoin) {
                         return sum + (token.amount || 0); // 1:1 conversion
                     } else {

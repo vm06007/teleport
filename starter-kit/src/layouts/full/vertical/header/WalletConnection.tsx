@@ -10,7 +10,7 @@ const WalletConnection = () => {
 
   const getChainName = (chainId: number) => {
     switch (chainId) {
-      case 1: return "Ethereum";
+      case 1: return "Multichain";
       case 137: return "Polygon";
       case 42161: return "Arbitrum";
       default: return `Chain ${chainId}`;

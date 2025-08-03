@@ -89,6 +89,15 @@ const protocolsConfig = [
     }
 ];
 
+// List of tokens to skip rendering in the protocol table
+const SKIP_TOKENS = ['fxVERSE', 'WPOL', 'USD0', 'slvlUSD', 'lvlUSD', 'eETH'];
+
+// Helper function to check if a token should be skipped
+const shouldSkipToken = (symbol: string): boolean => {
+    const symbolUpper = symbol?.toUpperCase();
+    return SKIP_TOKENS.includes(symbolUpper);
+};
+
 // Helper function to deduplicate tokens by symbol
 const deduplicateTokens = (tokens: any[]) => {
     return tokens.reduce((acc: any[], token: any) => {
@@ -103,6 +112,11 @@ const deduplicateTokens = (tokens: any[]) => {
 // Get tokens with proper metadata and icons
 const getTokensForProtocol = (protocolKey: string) => {
     const createToken = (symbol: string, id: string, color: string = "primary") => {
+        // Skip tokens that should not be displayed
+        if (shouldSkipToken(symbol)) {
+            return null;
+        }
+
         const metadata = getTokenMetadata(symbol);
         return {
             id,
@@ -117,32 +131,32 @@ const getTokensForProtocol = (protocolKey: string) => {
             return [
                 createToken("WETH", "1", "secondary"),
                 createToken("DAI", "2", "primary")
-            ];
+            ].filter(Boolean);
         case 'spark':
             return [
                 createToken("USDS", "1", "primary"),
                 createToken("ETH", "2", "secondary")
-            ];
+            ].filter(Boolean);
         case 'aave':
             return [
                 createToken("USDC", "1", "primary"),
                 createToken("DAI", "2", "success")
-            ];
+            ].filter(Boolean);
         case 'curve':
             return [
                 createToken("USDT", "1", "primary"),
                 createToken("USDC", "2", "primary")
-            ];
+            ].filter(Boolean);
         case 'oneinch':
             return [
                 createToken("USDC", "1", "primary"),
                 createToken("ETH", "2", "secondary")
-            ];
+            ].filter(Boolean);
         default:
             return [
                 createToken("USDS", "1", "primary"),
                 createToken("ETH", "2", "secondary")
-            ];
+            ].filter(Boolean);
     }
 };
 
@@ -169,15 +183,17 @@ const transformProtocolData = (
                 // Use actual token data from breakdown if available, otherwise use default tokens
                 let protocolTokens;
                 if (breakdown.tokens && breakdown.tokens.length > 0) {
-                    // Deduplicate tokens based on symbol
+                    // Deduplicate tokens based on symbol and filter out problematic tokens
                     const uniqueTokens = deduplicateTokens(breakdown.tokens);
 
-                    protocolTokens = uniqueTokens.map((token: any, index: number) => ({
-                        id: (index + 1).toString(),
-                        symbol: token.symbol,
-                        color: token.isStablecoin ? "primary" : "secondary",
-                        icon: token.icon || getTokenMetadata(token.symbol).icon || ''
-                    }));
+                    protocolTokens = uniqueTokens
+                        .filter((token: any) => !shouldSkipToken(token.symbol)) // Filter out problematic tokens
+                        .map((token: any, index: number) => ({
+                            id: (index + 1).toString(),
+                            symbol: token.symbol,
+                            color: token.isStablecoin ? "primary" : "secondary",
+                            icon: token.icon || getTokenMetadata(token.symbol).icon || ''
+                        }));
                 } else {
                     protocolTokens = getTokensForProtocol(key);
                 }
@@ -288,7 +304,9 @@ const columns = [
         header: () => <span>Tokens</span>,
         cell: (info) => (
             <div className="flex">
-                {info.getValue().map((token) => (
+                {info.getValue()
+                    .filter((token) => !shouldSkipToken(token.symbol)) // Filter out problematic tokens
+                    .map((token) => (
                     <div className="-ms-2" key={token.id} title={token.symbol}>
                         <div className="h-8 w-8 border-2 border-white dark:border-darkborder bg-white dark:bg-dark flex justify-center items-center p-1" style={{ borderRadius: '20px' }}>
                             <img
@@ -352,11 +370,11 @@ const columns = [
 const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) => {
     // Wallet connection
     const { account } = useWallet();
-    
+
     // PayoutFlux contract configuration
     const PAYOUT_FLUX_ADDRESS = '0x126C0fB2FeB16530a295D3BbA1d9dE08096D4838' as const;
     const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' as const;
-    
+
     // Token address mappings for protocol tokens
     const tokenAddressMap: { [key: string]: string } = {
         'WETH': WETH_ADDRESS,
@@ -366,7 +384,7 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
         'USDS': '0xdC035D45d973E3EC169d2276DDab16f1e407384F', // Spark USDS token
         'USDT': '0xdAC17F958D2ee523a2206206994597C13D831ec7',
     };
-    
+
     // Current token prices (in production, these would come from a price oracle)
     const tokenPrices: { [address: string]: number } = {
         [WETH_ADDRESS]: 3400, // ETH price in USD
@@ -375,7 +393,7 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
         "0xdC035D45d973E3EC169d2276DDab16f1e407384F": 1, // USDS price in USD
         "0xdAC17F958D2ee523a2206206994597C13D831ec7": 1, // USDT price in USD
     };
-    
+
     // Wagmi hooks for PayoutFlux contract interaction
     const {
         writeContract,
@@ -390,7 +408,7 @@ const RevenueForcastChart = ({ protocolBreakdowns }: RevenueForcastChartProps) =
     } = useWaitForTransactionReceipt({
         hash,
     });
-    
+
     // Selection state for checkboxes
     const [rowSelection, setRowSelection] = useState<{[key: string]: boolean}>({});
 

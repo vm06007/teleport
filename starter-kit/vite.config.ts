@@ -1,11 +1,14 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import fs from 'fs/promises';
 import svgr from '@svgr/rollup';
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+    const env = loadEnv(mode, process.cwd(), '');
+    
+    return {
     resolve: {
         alias: {
             src: resolve(__dirname, 'src'),
@@ -42,4 +45,8 @@ export default defineConfig({
     // })],
 
     plugins: [svgr(), react()],
+    define: {
+        'process.env.VITE_PROXY_URL': JSON.stringify(env.VITE_PROXY_URL),
+    },
+    };
 });

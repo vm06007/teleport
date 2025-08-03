@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const PROXY_URL = "http://localhost:5003/proxy";
+const PROXY_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:5003/proxy";
 
 // 1inch API configuration
 const ONEINCH_PORTFOLIO_ENDPOINT = "https://api.1inch.dev/portfolio/portfolio/v5.0/general/current_value";
@@ -12,7 +12,7 @@ export const fetchAavePositions = async (address, chainId = 1) => {
         console.log("Fetching Aave positions for address:", address, "chainId:", chainId);
         
         // Use 1inch API v5.0 portfolio endpoint
-        const response = await axios.get("http://localhost:5003/proxy", {
+        const response = await axios.get(PROXY_URL, {
             params: {
                 url: `https://api.1inch.dev/portfolio/portfolio/v5.0/general/current_value?addresses=${address}&chain_id=${chainId}&use_cache=true`
             },
@@ -69,7 +69,7 @@ export const fetchAavePositionBreakdown = async (address, chainId = 1) => {
         console.log("Fetching detailed Aave position breakdown for address:", address, "chainId:", chainId);
         
         // Use 1inch API to get detailed position breakdown
-        const response = await axios.get("http://localhost:5003/proxy", {
+        const response = await axios.get(PROXY_URL, {
             params: {
                 url: `https://api.1inch.dev/portfolio/portfolio/v5.0/protocols/aavev3/positions?addresses=${address}&chain_id=${chainId}&use_cache=true`
             },
@@ -159,7 +159,7 @@ export const calculateActualBalances = async (positions, chainId = 1) => {
         if (tokenAddresses.length > 0) {
             try {
                 const addressesString = tokenAddresses.join(",");
-                const response = await axios.get("http://localhost:5003/proxy", {
+                const response = await axios.get(PROXY_URL, {
                     params: {
                         url: `https://api.1inch.dev/price/v1.1/${chainId}/${addressesString}`
                     },

@@ -24,14 +24,14 @@ This repository contains **two distinct applications**:
 - **Location**: Root `/src` directory
 - **Purpose**: Marketing landing page explaining the 1inch Teleport solution
 - **URL**: `http://localhost:5173/` (root)
-- **Features**: 
+- **Features**:
   - Product overview and features
   - Cross-protocol solution explanation
   - Supported protocols showcase
   - Smooth scrolling navigation
 
 ### 🎯 **Main DeFi App** (`/starter-kit` folder)
-- **Location**: `/starter-kit` directory  
+- **Location**: `/starter-kit` directory
 - **Purpose**: Full-featured DeFi portfolio management application
 - **URL**: `http://localhost:5174/` (separate dev server)
 - **Features**:
@@ -44,7 +44,7 @@ This repository contains **two distinct applications**:
 
 ## 🎯 What is 1inch Teleport?
 
-**1inch Teleport** is a revolutionary cross-protocol DeFi solution that simplifies complex multi-step transactions into **single atomic operations**. 
+**1inch Teleport** is a revolutionary cross-protocol DeFi solution that simplifies complex multi-step transactions into **single atomic operations**.
 
 ### 🔄 Cross-Protocol Operations Made Simple
 
@@ -95,22 +95,74 @@ Collect All Interest & Fees → Single Transaction (1 atomic operation)
 graph TB
     A[User Wallet] --> B[1inch Teleport]
     B --> C[Aave Protocol]
-    B --> D[Compound Protocol] 
+    B --> D[Compound Protocol]
     B --> E[Uniswap Protocol]
     B --> F[Other DeFi Protocols]
-    
+
     C --> G[Repay Debt]
     C --> H[Withdraw Collateral]
     D --> I[Deposit Assets]
     D --> J[Borrow Assets]
     E --> K[Swap Tokens]
-    
+
     G --> L[Single Atomic Transaction]
     H --> L
     I --> L
     J --> L
     K --> L
 ```
+
+---
+
+## 🔧 Environment Configuration
+
+### Proxy Server Setup
+
+The application uses a proxy server to handle API requests. Configure the proxy URL using environment variables:
+
+#### For Development (starter-kit)
+1. Copy the example environment file:
+   ```bash
+   cd starter-kit
+   cp .env.example .env
+   ```
+
+2. Update the proxy URL in `.env`:
+   ```bash
+   VITE_PROXY_URL=http://localhost:5003/proxy
+   ```
+
+3. For production, update the URL to point to your proxy server:
+   ```bash
+   VITE_PROXY_URL=https://your-proxy-server.com/proxy
+   ```
+
+#### Environment Variables
+
+**For the Proxy Server (Root Directory):**
+- `ONEINCH_API_KEY`: Your 1inch API key from [portal.1inch.dev](https://portal.1inch.dev/)
+
+**For the Frontend Applications:**
+- `VITE_PROXY_URL`: The URL of your proxy server (defaults to `http://localhost:5003/proxy`)
+
+#### API Key Setup
+
+1. **Get your 1inch API key:**
+   - Visit [portal.1inch.dev](https://portal.1inch.dev/)
+   - Sign up and create a new API key
+   - Copy the API key
+
+2. **Configure the API key:**
+   ```bash
+   # In the root directory
+   echo "ONEINCH_API_KEY=your_actual_api_key_here" > .env
+   ```
+
+3. **Start the proxy server:**
+   ```bash
+   node server.js
+   # Proxy server will use the API key from .env
+   ```
 
 ---
 
@@ -142,9 +194,21 @@ bun install
 
 ### 3. Configure Environment Variables
 
-Create `.env.local` in the root directory:
+**For the Proxy Server (Root Directory):**
+Create `.env` in the root directory:
 ```env
-VITE_ONEINCH_API_KEY=your_1inch_api_key_here
+# 1inch API Key for Proxy Server
+ONEINCH_API_KEY=your_1inch_api_key_here
+
+# Proxy URL for Frontend Applications
+VITE_PROXY_URL=http://localhost:5003/proxy
+```
+
+**For the Frontend App (Starter Kit):**
+Create `.env` in the starter-kit directory:
+```env
+# Proxy URL for Frontend Applications
+VITE_PROXY_URL=http://localhost:5003/proxy
 ```
 
 ### 4. Set Up Proxy Server for 1inch API
@@ -154,7 +218,12 @@ The application uses a proxy server to handle 1inch API calls securely. Follow t
 #### Option A: Using Environment Variable (Recommended)
 ```bash
 # Create .env file in root directory
-echo "ONEINCH_API_KEY=your_api_key_here" > .env
+cp .env.example .env
+# Edit .env and replace 'your_1inch_api_key_here' with your actual API key
+
+# Create .env file in starter-kit directory
+cd starter-kit
+cp .env.example .env
 ```
 
 #### Option B: Direct API Key Setup
@@ -306,7 +375,7 @@ sequenceDiagram
     participant Aave
     participant Teleport
     participant Compound
-    
+
     User->>Teleport: Initiate migration
     Teleport->>Aave: Repay debt + withdraw
     Teleport->>Compound: Deposit + borrow
@@ -320,7 +389,7 @@ sequenceDiagram
     participant Protocol A
     participant Protocol B
     participant Teleport
-    
+
     User->>Teleport: Take flash loan
     Teleport->>Protocol A: Repay borrow
     Teleport->>Protocol A: Withdraw liquidity

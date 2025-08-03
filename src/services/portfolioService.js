@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getTokenPrice, isNativeCurrency, getNativeCurrencySymbol } from "../utils/tokenMappings";
 
-const PROXY_URL = "http://localhost:5003/proxy";
+const PROXY_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:5003/proxy";
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
