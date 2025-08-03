@@ -34,7 +34,7 @@ function TaskManager() {
       <KanbanHeader />
       <SimpleBar>
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="flex gap-6 mt-4">
+          <div className="flex gap-3 mt-4">
             {todoCategories.map((category) => (
               <Droppable droppableId={category.id.toString()} key={category.id}>
                 {(provided: any) => (

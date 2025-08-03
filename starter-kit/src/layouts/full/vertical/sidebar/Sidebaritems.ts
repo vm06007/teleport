@@ -36,13 +36,13 @@ const SidebarContent: MenuItem[] = [
         heading: "Pages",
         children: [
           {
-            name: "Dashboard",
+            name: "Protocol Overview",
             icon: "solar:widget-3-outline",
             id: uniqueId(),
             url: "/",
           },
           {
-            name: "Interactive Board",
+            name: "Liquidity Manager",
             icon: "solar:clipboard-list-outline",
             id: uniqueId(),
             url: "/apps/kanban",
