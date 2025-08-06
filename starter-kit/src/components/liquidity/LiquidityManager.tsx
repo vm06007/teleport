@@ -118,6 +118,8 @@ const LiquidityManager = () => {
     }>({ isDragging: false });
     
     const [isProcessingTransaction, setIsProcessingTransaction] = useState(false);
+    const [transactionHash, setTransactionHash] = useState<string | null>(null);
+    const [showTransactionSuccess, setShowTransactionSuccess] = useState(false);
     const [originalColumns, setOriginalColumns] = useState<LiquidityColumn[]>([]);
     const [pendingChanges, setPendingChanges] = useState<Array<{
         token: TokenPosition;
@@ -440,6 +442,13 @@ const LiquidityManager = () => {
             // Request user signature for all changes
             await requestUserSignature(message);
             
+            // Simulate transaction submission and execution
+            console.log('🔄 Simulating transaction submission...');
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+            
+            // Generate a mock transaction hash
+            const mockTxHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+            
             // Execute all pending transactions
             for (const change of pendingChanges) {
                 const sourceCol = originalColumns.find(col => col.name === change.sourceColumn);
@@ -453,7 +462,18 @@ const LiquidityManager = () => {
             setOriginalColumns([...columns]);
             setPendingChanges([]);
             
+            // Set transaction hash and show success
+            setTransactionHash(mockTxHash);
+            setShowTransactionSuccess(true);
+            
             console.log(`✅ Confirmed ${changesCount} changes`);
+            console.log(`📝 Transaction Hash: ${mockTxHash}`);
+            
+            // Auto-hide success message after 5 seconds
+            setTimeout(() => {
+                setShowTransactionSuccess(false);
+                setTransactionHash(null);
+            }, 5000);
             
         } catch (error) {
             console.error('Failed to confirm changes:', error);
@@ -860,6 +880,48 @@ const LiquidityManager = () => {
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex items-center gap-3">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                         <span className="text-gray-700 dark:text-gray-300">Processing transaction...</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Transaction Success Notification */}
+            {showTransactionSuccess && transactionHash && (
+                <div className="fixed top-4 right-4 bg-green-100 dark:bg-green-800 border border-green-300 dark:border-green-600 rounded-lg p-4 shadow-xl z-50 max-w-md backdrop-blur-sm">
+                    <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                            <Icon icon="solar:check-circle-bold-duotone" className="h-6 w-6 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="text-sm font-medium text-green-900 dark:text-green-100">
+                                Transaction Successful!
+                            </h4>
+                            <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                                Your liquidity movements have been processed.
+                            </p>
+                            <div className="mt-2">
+                                <p className="text-xs text-green-600 dark:text-green-400 font-mono">
+                                    {transactionHash.slice(0, 10)}...{transactionHash.slice(-8)}
+                                </p>
+                                <a
+                                    href={`https://etherscan.io/tx/${transactionHash}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mt-1"
+                                >
+                                    <Icon icon="solar:external-link-bold-duotone" className="h-3 w-3" />
+                                    View on Etherscan
+                                </a>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setShowTransactionSuccess(false);
+                                setTransactionHash(null);
+                            }}
+                            className="flex-shrink-0 text-green-400 hover:text-green-600"
+                        >
+                            <Icon icon="solar:close-circle-bold-duotone" className="h-4 w-4" />
+                        </button>
                     </div>
                 </div>
             )}
