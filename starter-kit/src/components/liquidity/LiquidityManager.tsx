@@ -20,6 +20,7 @@ interface TokenPosition {
     address: string;
     apy?: number; // For protocol positions
     isSuggested?: boolean; // For suggested deposits
+    splitAmount?: number; // For split functionality
 }
 
 interface LiquidityColumn {
@@ -405,11 +406,33 @@ const LiquidityManager = () => {
             const tokenToMove = sourceColumn.tokens[source.index];
             if (!tokenToMove) return cleanedColumns;
 
+            // Check for merge with same currency in destination
+            const existingTokenIndex = destinationColumn.tokens.findIndex(
+                token => token.symbol === tokenToMove.symbol && token.address === tokenToMove.address
+            );
+
+            if (existingTokenIndex !== -1) {
+                // Merge tokens
+                const existingToken = destinationColumn.tokens[existingTokenIndex];
+                const mergedToken = {
+                    ...existingToken,
+                    amount: existingToken.amount + tokenToMove.amount,
+                    valueUSD: existingToken.valueUSD + tokenToMove.valueUSD,
+                    id: `${existingToken.symbol.toLowerCase()}-${existingToken.address}-merged-${Date.now()}`
+                };
+
+                // Remove the existing token and add the merged one
+                destinationColumn.tokens.splice(existingTokenIndex, 1);
+                destinationColumn.tokens.splice(destination.index, 0, mergedToken);
+
+                console.log(`🔗 Merged ${tokenToMove.symbol}: ${existingToken.amount} + ${tokenToMove.amount} = ${mergedToken.amount}`);
+            } else {
+                // Add token to destination normally
+                destinationColumn.tokens.splice(destination.index, 0, tokenToMove);
+            }
+
             // Remove token from source
             sourceColumn.tokens.splice(source.index, 1);
-
-            // Add token to destination
-            destinationColumn.tokens.splice(destination.index, 0, tokenToMove);
 
             // Track this change
             const action = getTransactionAction(sourceColumn, destinationColumn);
@@ -563,6 +586,46 @@ const LiquidityManager = () => {
         }
     };
 
+    // Handle token split
+    const handleSplitToken = (token: TokenPosition, columnId: string) => {
+        const splitAmount = token.amount / 2;
+        
+        setColumns(prevColumns => {
+            const newColumns = [...prevColumns];
+            const column = newColumns.find(col => col.id === columnId);
+            
+            if (!column) return prevColumns;
+
+            // Find the token in the column
+            const tokenIndex = column.tokens.findIndex(t => t.id === token.id);
+            if (tokenIndex === -1) return prevColumns;
+
+            // Create two split tokens
+            const splitToken1 = {
+                ...token,
+                amount: splitAmount,
+                valueUSD: token.valueUSD / 2,
+                id: `${token.symbol.toLowerCase()}-${token.address}-split1-${Date.now()}`,
+                splitAmount: splitAmount
+            };
+
+            const splitToken2 = {
+                ...token,
+                amount: splitAmount,
+                valueUSD: token.valueUSD / 2,
+                id: `${token.symbol.toLowerCase()}-${token.address}-split2-${Date.now()}`,
+                splitAmount: splitAmount
+            };
+
+            // Replace the original token with two split tokens
+            column.tokens.splice(tokenIndex, 1, splitToken1, splitToken2);
+
+            console.log(`✂️ Split ${token.symbol}: ${token.amount} → ${splitAmount} + ${splitAmount}`);
+
+            return newColumns;
+        });
+    };
+
     if (!isConnected) {
         return (
             <div className="text-center py-8">
@@ -691,9 +754,14 @@ const LiquidityManager = () => {
                                                                 ref={provided.innerRef}
                                                                 {...provided.draggableProps}
                                                                 {...provided.dragHandleProps}
-                                                                className={`bg-white dark:bg-darkgray rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-600 cursor-grab hover:shadow-md transition-all ${snapshot.isDragging ? 'shadow-lg rotate-2' : ''
+                                                                className={`bg-white dark:bg-darkgray rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-600 cursor-grab hover:shadow-md transition-all relative ${snapshot.isDragging ? 'shadow-lg rotate-2' : ''
                                                                     }`}
                                                             >
+                                                                {token.apy && (
+                                                                    <Badge color="success" size="xs" className="absolute -top-1 -right-2 z-10 text-green-900 dark:text-green-100">
+                                                                        {token.apy}% APY
+                                                                    </Badge>
+                                                                )}
                                                                 <div className="flex items-center gap-3">
                                                                     <img
                                                                         src={token.icon}
@@ -717,11 +785,27 @@ const LiquidityManager = () => {
                                                                             {formatValue(token.valueUSD)}
                                                                         </p>
                                                                     </div>
-                                                                    <Icon
-                                                                        icon="solar:maximize-bold-duotone"
-                                                                        className="text-gray-400"
-                                                                        height={16}
-                                                                    />
+                                                                    <div className="flex items-center gap-1">
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleSplitToken(token, walletColumn.id);
+                                                                            }}
+                                                                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                                                                            title="Split token"
+                                                                        >
+                                                                            <Icon
+                                                                                icon="solar:scissors-bold-duotone"
+                                                                                className="text-gray-400 hover:text-blue-600"
+                                                                                height={16}
+                                                                            />
+                                                                        </button>
+                                                                        <Icon
+                                                                            icon="solar:maximize-bold-duotone"
+                                                                            className="text-gray-400"
+                                                                            height={16}
+                                                                        />
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -803,12 +887,17 @@ const LiquidityManager = () => {
                                                             ref={provided.innerRef}
                                                             {...provided.draggableProps}
                                                             {...provided.dragHandleProps}
-                                                            className={`bg-white dark:bg-darkgray rounded-lg p-3 m-1 shadow-sm border ${
+                                                            className={`bg-white dark:bg-darkgray rounded-lg p-3 m-1 shadow-sm border relative ${
                                                                 token.isSuggested
                                                                     ? 'border-dashed border-2 border-blue-300 dark:border-blue-600 opacity-60 hover:opacity-80 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20'
                                                                     : 'border-gray-200 dark:border-gray-600 cursor-grab hover:shadow-md'
                                                             } transition-all ${snapshot.isDragging ? 'shadow-lg rotate-2' : ''}`}
                                                         >
+                                                            {token.apy && (
+                                                                <Badge color="success" size="xs" className="absolute -top-1 -right-2 z-10 text-green-900 dark:text-green-100">
+                                                                    {token.apy}% APY
+                                                                </Badge>
+                                                            )}
                                                             <div className="flex items-center gap-3">
                                                                 <img
                                                                     src={token.icon}
@@ -820,15 +909,10 @@ const LiquidityManager = () => {
                                                                     }}
                                                                 />
                                                                 <div className="flex-1">
-                                                                    <div className="flex items-center justify-between">
+                                                                    <div className="flex items-center justify-between min-w-0">
                                                                         <h4 className="font-medium text-gray-900 dark:text-white">
                                                                             {token.symbol}
                                                                         </h4>
-                                                                        {token.apy && (
-                                                                            <Badge color="success" size="xs">
-                                                                                {token.apy}% APY
-                                                                            </Badge>
-                                                                        )}
                                                                     </div>
                                                                     <p className="text-sm text-gray-500 dark:text-gray-400">
                                                                         {token.isSuggested ? "Available in wallet" : formatAmount(token.amount, token.symbol)}
@@ -837,11 +921,29 @@ const LiquidityManager = () => {
                                                                         {token.isSuggested ? "Potential earnings →" : formatValue(token.valueUSD)}
                                                                     </p>
                                                                 </div>
-                                                                <Icon
-                                                                    icon={token.isSuggested ? "solar:target-bold-duotone" : "solar:maximize-bold-duotone"}
-                                                                    className={token.isSuggested ? "text-blue-400" : "text-gray-400"}
-                                                                    height={16}
-                                                                />
+                                                                <div className="flex items-center gap-1">
+                                                                    {!token.isSuggested && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleSplitToken(token, column.id);
+                                                                            }}
+                                                                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                                                                            title="Split token"
+                                                                        >
+                                                                            <Icon
+                                                                                icon="solar:scissors-bold-duotone"
+                                                                                className="text-gray-400 hover:text-blue-600"
+                                                                                height={16}
+                                                                            />
+                                                                        </button>
+                                                                    )}
+                                                                    <Icon
+                                                                        icon={token.isSuggested ? "solar:target-bold-duotone" : "solar:maximize-bold-duotone"}
+                                                                        className={token.isSuggested ? "text-blue-400" : "text-gray-400"}
+                                                                        height={16}
+                                                                    />
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}
