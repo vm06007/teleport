@@ -1,5 +1,6 @@
 import {
     AppBar,
+    Box,
     Container,
     IconButton,
     Stack,
@@ -72,7 +73,21 @@ const Navbar = () => {
                     flexWrap="wrap"
                 >
                     {/* Logo */}
-                    <img src={Logo} style={{ height: "100%", width: "150px", objectFit: "contain" }} />
+                    <Box
+                        component="img"
+                        src={Logo}
+                        sx={{
+                            height: "100%",
+                            width: "150px",
+                            objectFit: "contain",
+                            cursor: "pointer",
+                            transition: "transform 0.2s ease-in-out",
+                            "&:hover": {
+                                transform: "scale(1.2)",
+                            },
+                        }}
+                        onClick={() => window.open('https://teleport-djm2.vercel.app/', '_blank')}
+                    />
 
                     {/* Links */}
                     {!isMobile && (

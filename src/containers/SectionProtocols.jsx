@@ -17,8 +17,8 @@ const SectionProtocols = () => {
                 spacing={3}
                 sx={{ mb: 10, position: "relative" }}
             >
-                {ITEMS.map(({ link, image }) => (
-                    <Grid item xs={6} sm={4} md={3} lg={2}>
+                {ITEMS.map(({ link, image }, index) => (
+                    <Grid key={index} item xs={6} sm={4} md={3} lg={2}>
                         <Box
                             sx={{ cursor: "pointer", "&:hover": { filter: "contrast(40%)" } }}
                         >

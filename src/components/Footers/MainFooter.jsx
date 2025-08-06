@@ -28,7 +28,14 @@ const Footer = () => {
                         {copyright.left}
                     </Typography>
 
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography 
+                        variant="body1" 
+                        color="white" 
+                        sx={{ 
+                            fontWeight: "bold",
+                            fontSize: "1.1rem"
+                        }}
+                    >
                         {copyright.center}
                     </Typography>
 

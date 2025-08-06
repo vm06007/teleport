@@ -113,7 +113,7 @@ export const sectionBehindContent = {
 };
 
 export const SectionProtocolsContent = {
-    title: "Supported Protocols",
+    title: "Supported Integrations",
     ITEMS: [
         {
             link: "https://near.org/",
