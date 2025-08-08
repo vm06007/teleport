@@ -74,12 +74,12 @@ export async function fetchUserUniswapPositions(): Promise<UniswapPosition[]> {
             },
             tickLower: -887220, // Full range
             tickUpper: 887220,   // Full range
-            liquidity: "13861650000000000000000", // $13,861.65 position
-            tokensOwed0: "93000000000000000", // $0.93 fees in ETH
+            liquidity: "15008190000000000000000", // $15,008.19 position
+            tokensOwed0: "385000000000000000", // $3.85 fees in ETH
             tokensOwed1: "0", // No DAI fees
             token0Symbol: "WETH",
             token1Symbol: "DAI",
-            feesUSD: 0.93,
+            feesUSD: 3.85,
         },
         {
             tokenId: "4343", // Based on your position value
@@ -92,18 +92,19 @@ export async function fetchUserUniswapPositions(): Promise<UniswapPosition[]> {
             },
             tickLower: -887220, // Full range
             tickUpper: 887220,   // Full range  
-            liquidity: "4343000000000000000000", // $4,343.00 position
-            tokensOwed0: "27000000000000000", // $0.27 earnings in ETH
+            liquidity: "4702280000000000000000", // $4,702.28 position
+            tokensOwed0: "101000000000000000", // $1.01 earnings in ETH
             tokensOwed1: "0", // No USDC fees
             token0Symbol: "WETH",
             token1Symbol: "USDC",
-            feesUSD: 0.27,
+            feesUSD: 1.01,
         }
     ];
 
     console.log(`✅ Loaded ${positions.length} V4 positions for batch fee collection:`);
-    console.log(`📊 Position 1: WETH/DAI (0.3%) - $13,861.65 position, $0.93 fees`);
-    console.log(`📊 Position 2: WETH/USDC (0.05%) - $4,343.00 position, $0.27 earnings`);
+    console.log(`📊 Position 1: WETH/DAI (0.3%) - $15,008.19 position, $3.85 fees`);
+    console.log(`📊 Position 2: WETH/USDC (0.05%) - $4,702.28 position, $1.01 earnings`);
+    console.log(`💰 Total fees available: $4.86`);
     
     return positions;
 }
